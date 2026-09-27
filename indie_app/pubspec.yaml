@@ -1,0 +1,39 @@
+name: indie_app
+description: "Indie — Independent Intelligence. Personal agentic messaging platform."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  intl: ^0.19.0
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+# Run `dart run flutter_launcher_icons` after `flutter create .` to apply the
+# Indie mark as the app icon on Android/iOS.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/indie_icon_launcher.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  background_color_ios: "#0B0D14"
+  adaptive_icon_background: "#0B0D14"
+  adaptive_icon_foreground: "assets/images/indie_icon.png"
