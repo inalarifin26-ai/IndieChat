@@ -1,0 +1,23 @@
+{
+  "name": "indie-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Indie — Personal Agentic Messaging Platform backend skeleton (auth, Vault, Consent/Permission Engine, Execution Engine).",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --experimental-sqlite src/index.js",
+    "dev": "node --experimental-sqlite --watch src/index.js",
+    "seed": "node --experimental-sqlite src/seed.js",
+    "test": "node --experimental-sqlite --test test/smoke.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
