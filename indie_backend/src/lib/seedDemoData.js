@@ -5,6 +5,37 @@ function uuid() {
   return crypto.randomUUID();
 }
 
+
+function minsAgo(m) {
+  return new Date(Date.now() - m * 60000).toISOString();
+}
+
+function cMsg(userId, contactId, sender, text, minutes, extra = {}) {
+  const id = extra.id || uuid();
+  db.prepare(
+    `INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at, kind, payload_json, status, reply_to_id, reactions_json, my_reaction)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id, userId, contactId, sender, text, minsAgo(minutes), extra.kind || 'text',
+    extra.payload ? JSON.stringify(extra.payload) : null,
+    sender === 'user' ? extra.status || 'read' : null,
+    extra.replyTo || null, JSON.stringify(extra.reactions || {}), extra.myReaction || null
+  );
+  return id;
+}
+
+function aMsg(userId, agentId, sender, kind, text, minutes, payload) {
+  db.prepare(
+    `INSERT INTO agent_messages (id, user_id, agent_id, sender, kind, text, payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(uuid(), userId, agentId, sender, kind, text, payload ? JSON.stringify(payload) : null, minsAgo(minutes));
+}
+
+function setSteps(userId, agentId, steps) {
+  steps.forEach((step, i) =>
+    db.prepare('INSERT INTO agent_workflow_steps (id, user_id, agent_id, position, step) VALUES (?, ?, ?, ?, ?)').run(uuid(), userId, agentId, i, step)
+  );
+}
+
 /**
  * Populates a new account with the same demo content as the Flutter app's
  * MockData (mock_data.dart), so a fresh Personal ID has something to look
@@ -14,25 +45,28 @@ function uuid() {
 function seedDemoData(userId) {
   const now = new Date().toISOString();
 
-  // Contacts
+  // Contacts (info/group/pinned/unread + rich messages: file, reply, reaction, shared result)
   const alexId = uuid();
   db.prepare(
-    'INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
-  ).run(alexId, userId, 'Alex Rahman', 'AR', 'Online', now);
-  db.prepare(
-    'INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(uuid(), userId, alexId, 'contact', 'Did the campaign report go out?', now);
-  db.prepare(
-    'INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(uuid(), userId, alexId, 'user', 'Yep, agent sent it this morning ✅', now);
+    "INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at, info, grp) VALUES (?, ?, 'Alex Rahman', 'AR', 'Online', 1, ?, 'alex@indie.id', 'Work')"
+  ).run(alexId, userId, now);
+  cMsg(userId, alexId, 'contact', 'Did the campaign report go out?', 58);
+  cMsg(userId, alexId, 'user', 'Yep, agent sent it this morning ✅', 55);
+  cMsg(userId, alexId, 'contact', '', 41, { kind: 'file', payload: { file: { name: 'Campaign-Report.pdf', size: '2.4 MB' } } });
+  const greatId = cMsg(userId, alexId, 'user', "Great! Let's review it in the next meeting.", 38, { reactions: { '👍': 1 } });
+  cMsg(userId, alexId, 'contact', 'Sure, see you at 3', 35, { replyTo: greatId });
 
   const sarahId = uuid();
   db.prepare(
-    'INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)'
-  ).run(sarahId, userId, 'Sarah Putri', 'SP', 'Last seen 2h ago', now);
+    "INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at, info, grp, unread) VALUES (?, ?, 'Sarah Putri', 'SP', 'Last seen 2h ago', 0, ?, 'sarah@indie.id', '', 1)"
+  ).run(sarahId, userId, now);
+  cMsg(userId, sarahId, 'contact', 'Send me the vault link when ready', 190);
+
+  const familyId = uuid();
   db.prepare(
-    'INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(uuid(), userId, sarahId, 'contact', 'Send me the vault link when ready', now);
+    "INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at, info, grp) VALUES (?, ?, 'Family', 'FM', '4 members', 0, ?, 'Group · 4 members', 'Family')"
+  ).run(familyId, userId, now);
+  cMsg(userId, familyId, 'contact', 'Dinner at 7?', 360);
 
   // Agents
   const marketingId = uuid();
@@ -49,9 +83,16 @@ function seedDemoData(userId) {
   db.prepare('INSERT INTO agent_memory (id, user_id, agent_id, note, created_at) VALUES (?, ?, ?, ?, ?)').run(
     uuid(), userId, marketingId, 'Prefers concise report tone', now
   );
-  db.prepare(
-    "INSERT INTO agent_messages (id, user_id, agent_id, sender, kind, text, payload_json, created_at) VALUES (?, ?, ?, 'agent', 'approvalRequest', ?, ?, ?)"
-  ).run(uuid(), userId, marketingId, 'Marketing Agent wants to publish an update for Campaign Alpha.', JSON.stringify({ workflow: 'Daily Marketing Report' }), now);
+  setSteps(userId, marketingId, ['Read campaign analytics', 'Generate report', 'Notify you', 'Ask your approval before publishing']);
+  aMsg(userId, marketingId, 'agent', 'text', 'Analysis of Campaign Alpha is done. Summary below:', 22);
+  aMsg(userId, marketingId, 'agent', 'card', '', 21, {
+    card: {
+      title: 'Campaign Performance',
+      metrics: [['Total reach', '124.5K', '↑ 12.4%'], ['Engagement rate', '4.8%', '↑ 2.1%']],
+      insights: ['Instagram performed best (CTR 5.2%)', 'Audience engagement increased by 12.4%', 'Conversion rate improved by 8.7%'],
+    },
+  });
+  aMsg(userId, marketingId, 'agent', 'approvalRequest', 'Marketing Agent wants to publish an update for Campaign Alpha.', 6, { workflow: 'Daily Marketing Report' });
 
   const researchId = uuid();
   db.prepare(
@@ -61,6 +102,8 @@ function seedDemoData(userId) {
   ['Read public web data', 'Summarize findings'].forEach((label) =>
     db.prepare('INSERT INTO agent_permissions (id, user_id, agent_id, label) VALUES (?, ?, ?, ?)').run(uuid(), userId, researchId, label)
   );
+  setSteps(userId, researchId, ['Search public web data', 'Summarize findings', 'Report results to you']);
+  aMsg(userId, researchId, 'agent', 'text', 'Started researching competitor pricing, back to you shortly.', 20);
 
   const financeId = uuid();
   db.prepare(
@@ -70,6 +113,11 @@ function seedDemoData(userId) {
   ['Read invoices', 'Generate report'].forEach((label) =>
     db.prepare('INSERT INTO agent_permissions (id, user_id, agent_id, label) VALUES (?, ?, ?, ?)').run(uuid(), userId, financeId, label)
   );
+  setSteps(userId, financeId, ['Read invoices', 'Calculate weekly cash flow', 'Save report to Vault']);
+  aMsg(userId, financeId, 'agent', 'text', 'Weekly cash flow summary is ready in your Vault.', 2900);
+  aMsg(userId, financeId, 'agent', 'card', '', 2899, {
+    card: { title: 'Cash Flow Report — Week 39', metrics: [['Net cash flow', 'Rp 18.4jt', '↑ 6%'], ['Outstanding', '3 invoices', '']], insights: ['3 invoices still outstanding', 'Cash position improved week-over-week'] },
+  });
 
   // Workflow: Daily Marketing Report (active, with an approval node)
   const wfId = uuid();

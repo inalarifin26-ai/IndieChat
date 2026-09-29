@@ -9,6 +9,7 @@ const workflowsRoutes = require('./routes/workflows');
 const consentRoutes = require('./routes/consent');
 const vaultRoutes = require('./routes/vault');
 const auditRoutes = require('./routes/audit');
+const orchestratorRoutes = require('./routes/orchestrator');
 
 const app = express();
 app.use(cors());
@@ -23,6 +24,7 @@ app.use('/workflows', workflowsRoutes);
 app.use('/consent', consentRoutes);
 app.use('/vault', vaultRoutes);
 app.use('/audit', auditRoutes);
+app.use('/orchestrator', orchestratorRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

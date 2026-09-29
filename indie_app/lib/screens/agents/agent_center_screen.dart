@@ -4,7 +4,9 @@ import '../../core/theme/app_colors.dart';
 import '../../models/agent_models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
+import '../../widgets/indie_logo.dart';
 import 'agent_chat_screen.dart';
+import 'orchestrator_screen.dart';
 
 class AgentCenterScreen extends StatelessWidget {
   const AgentCenterScreen({super.key});
@@ -13,6 +15,8 @@ class AgentCenterScreen extends StatelessWidget {
     switch (s) {
       case AgentActivityState.idle:
         return 'Idle';
+      case AgentActivityState.ready:
+        return 'Ready';
       case AgentActivityState.monitoring:
         return 'Monitoring';
       case AgentActivityState.working:
@@ -34,6 +38,7 @@ class AgentCenterScreen extends StatelessWidget {
         return AppColors.danger;
       case AgentActivityState.working:
       case AgentActivityState.monitoring:
+      case AgentActivityState.ready:
         return AppColors.success;
       case AgentActivityState.scheduled:
         return AppColors.warning;
@@ -52,15 +57,57 @@ class AgentCenterScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Agent Center'),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add_rounded)),
+          IconButton(
+            tooltip: 'Ask Orchestrator',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OrchestratorScreen())),
+            icon: const Icon(Icons.auto_awesome_rounded),
+          ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           const Text(
-            'Your autonomous digital workers — separate from human contacts.',
+            'Agents are created by the Orchestrator, which also defines their workflow.',
             style: TextStyle(color: AppColors.textFaint, fontSize: 12.5),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OrchestratorScreen())),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.transparent),
+                  gradient: const LinearGradient(colors: [AppColors.violet, AppColors.indigo, AppColors.cyan], begin: Alignment.bottomLeft, end: Alignment.topRight),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(1.4),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
+                    child: Row(
+                      children: [
+                        const IndieMark(size: 44),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Orchestrator', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                              Text('Your command center — coordinates multiple agents on one task', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        const StatusPill(label: 'Active', color: AppColors.success),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
           if (needsAttention.isNotEmpty) ...[
             const SectionHeader(title: 'Needs attention'),

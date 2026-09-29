@@ -32,7 +32,7 @@ class AgentDashboardScreen extends StatelessWidget {
               Tab(text: 'Overview'),
               Tab(text: 'Activity'),
               Tab(text: 'Permissions'),
-              Tab(text: 'Automation'),
+              Tab(text: 'Workflow'),
               Tab(text: 'Memory'),
             ],
           ),
@@ -89,15 +89,19 @@ class AgentDashboardScreen extends StatelessWidget {
             ),
             ListView(
               padding: const EdgeInsets.all(16),
-              children: agent.automationSummary
-                  .map((e) => Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: const Icon(Icons.schedule_rounded, color: AppColors.warning),
-                          title: Text(e, style: const TextStyle(fontSize: 13.5)),
-                        ),
-                      ))
-                  .toList(),
+              children: [
+                const Text('Defined by Orchestrator — the agent can only act within these steps.',
+                    style: TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                const SizedBox(height: 12),
+                ...agent.workflow.asMap().entries.map((e) => Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(radius: 12, backgroundColor: AppColors.cyan.withOpacity(0.15), child: Text('${e.key + 1}', style: const TextStyle(fontSize: 11, color: AppColors.cyan, fontWeight: FontWeight.w700))),
+                        title: Text(e.value, style: const TextStyle(fontSize: 13.5)),
+                      ),
+                    )),
+                if (agent.workflow.isEmpty) const Text('No workflow yet.', style: TextStyle(color: AppColors.textFaint)),
+              ],
             ),
             ListView(
               padding: const EdgeInsets.all(16),

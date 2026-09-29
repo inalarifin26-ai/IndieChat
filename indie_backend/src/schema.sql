@@ -188,3 +188,26 @@ CREATE TABLE IF NOT EXISTS audit_log (
   detail            TEXT DEFAULT '',
   created_at        TEXT NOT NULL
 );
+
+-- Workflow scope of an agent, defined by the Orchestrator. An agent's chat
+-- may only act within these steps (enforced server-side in routes/agents.js).
+CREATE TABLE IF NOT EXISTS agent_workflow_steps (
+  id                TEXT PRIMARY KEY,
+  user_id           TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  agent_id          TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  position          INTEGER NOT NULL,
+  step              TEXT NOT NULL
+);
+
+-- The Orchestrator chat thread (user <-> orchestrator, plus agent result bubbles).
+CREATE TABLE IF NOT EXISTS orchestrator_messages (
+  id                TEXT PRIMARY KEY,
+  user_id           TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender            TEXT NOT NULL,      -- 'user' | 'orchestrator' | 'agent'
+  agent_id          TEXT,
+  kind              TEXT DEFAULT 'text', -- text|welcome|plan|agent_result|result|agent_created|workflow_updated
+  text              TEXT DEFAULT '',
+  payload_json      TEXT,
+  saved             INTEGER DEFAULT 0,
+  created_at        TEXT NOT NULL
+);

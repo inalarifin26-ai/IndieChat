@@ -79,6 +79,25 @@ before this package was handed off:
   old token instantly stops working (`Session revoked`) — confirms
   recovery revokes prior sessions as documented in the spec
 
+
+## Chat rooms, Orchestrator & workflow-scoped agents (new)
+
+- **Contacts** are people only (`POST/PATCH/DELETE /contacts`) — reply quotes,
+  emoji reactions, delete (tombstoned), save-to-Vault on attachments, and
+  simulated delivery ticks (sent → delivered → read).
+- **Agents can only be created by the Orchestrator** (`/orchestrator/messages`)
+  — there is intentionally no `POST /agents`. Each agent gets a `workflow`
+  (an ordered list of steps) that a **server-side scope check**
+  (`lib/agentScope.js`) enforces on every message sent to that agent: in
+  scope → it works the step and posts a result card; out of scope → it
+  refuses and points back to the Orchestrator.
+- Giving the Orchestrator a task (e.g. "Plan a 7-day trip to Bali") creates
+  any missing agents, **a real workflow** (visible under `/workflows`, with
+  real nodes and connections), runs each agent, and posts a combined result
+  you can save to the Vault.
+- See the updated API reference table below for the new endpoints
+  (`/contacts/:id/messages/*`, `/agents/:id/messages/*`, `/orchestrator/*`).
+
 ## API reference
 
 All routes except `/health` and `/auth/*` require `Authorization: Bearer <token>`.

@@ -13,4 +13,34 @@ db.exec('PRAGMA journal_mode = WAL;');
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
+// Lightweight forward-only migrations: add columns introduced after the
+// first release so existing local databases keep working.
+function ensureColumns(table, cols) {
+  const have = db.prepare(`PRAGMA table_info(${table})`).all().map((r) => r.name);
+  for (const [name, def] of cols) {
+    if (!have.includes(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${def}`);
+  }
+}
+
+const messageCols = [
+  ['reply_to_id', 'TEXT'],
+  ['deleted', 'INTEGER DEFAULT 0'],
+  ['reactions_json', "TEXT DEFAULT '{}'"],
+  ['my_reaction', 'TEXT'],
+  ['saved', 'INTEGER DEFAULT 0'],
+];
+ensureColumns('contact_messages', [
+  ['kind', "TEXT DEFAULT 'text'"],
+  ['payload_json', 'TEXT'],
+  ['status', "TEXT DEFAULT 'sent'"],
+  ...messageCols,
+]);
+ensureColumns('agent_messages', messageCols);
+ensureColumns('contacts', [
+  ['info', "TEXT DEFAULT ''"],
+  ['grp', "TEXT DEFAULT ''"],
+  ['muted', 'INTEGER DEFAULT 0'],
+  ['unread', 'INTEGER DEFAULT 0'],
+]);
+
 module.exports = db;

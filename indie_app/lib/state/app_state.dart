@@ -6,6 +6,7 @@ import '../models/chat_models.dart';
 import '../models/agent_models.dart';
 import '../models/workflow_models.dart';
 import '../models/consent_models.dart';
+import '../models/orchestrator_models.dart';
 
 const _tokenPrefsKey = 'indie_token';
 
@@ -23,6 +24,11 @@ class AppState extends ChangeNotifier {
   final List<ConsentMandate> mandates = [];
   final List<ApprovalRequest> approvals = [];
   final List<VaultOutput> outputs = [];
+
+  // Orchestrator chat thread (the only place agents are created).
+  final List<OrchMessage> orchMessages = [];
+  bool orchLoaded = false;
+  bool orchWaiting = false; // an instruction is in flight; the reply arrives via polling
 
   final Map<String, WorkflowExecution> _liveExecutions = {};
   final Map<String, StreamSubscription> _execSubs = {};
@@ -104,6 +110,9 @@ class AppState extends ChangeNotifier {
     mandates.clear();
     approvals.clear();
     outputs.clear();
+    orchMessages.clear();
+    orchLoaded = false;
+    orchWaiting = false;
     for (final sub in _execSubs.values) {
       sub.cancel();
     }
@@ -181,34 +190,157 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ---------------- Messaging ----------------
+  // ---------------- Messaging: shared helpers ----------------
 
-  Future<void> sendContactMessage(String contactId, String text) async {
-    await _api.post('/contacts/$contactId/messages', {'text': text});
-    final contact = contacts.firstWhere((c) => c.id == contactId);
-    contact.messages.add(ChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), sender: SenderKind.user, text: text));
+  String _kindStr(MessageKind k) {
+    switch (k) {
+      case MessageKind.file:
+        return 'file';
+      case MessageKind.output:
+        return 'output';
+      default:
+        return 'text';
+    }
+  }
+
+  /// A cheap fingerprint so polling only rebuilds the UI when something changed
+  /// (new message, delivery status, reaction, delete, saved).
+  String _sig(List<ChatMessage> l) => l
+      .map((m) => '${m.id}|${m.status}|${m.myReaction}|${m.reactions}|${m.deleted}|${m.saved}')
+      .join(';');
+
+  Map<String, dynamic> _messageBody({
+    String? text,
+    MessageKind kind = MessageKind.text,
+    Map<String, dynamic>? payload,
+    String? outputId,
+    String? replyToId,
+  }) =>
+      {
+        'kind': _kindStr(kind),
+        if (text != null) 'text': text,
+        if (payload != null) 'payload': payload,
+        if (outputId != null) 'outputId': outputId,
+        if (replyToId != null) 'replyToId': replyToId,
+      };
+
+  void _replaceMessage(List<ChatMessage> list, Map<String, dynamic> json) {
+    final updated = ChatMessage.fromApi(json);
+    final i = list.indexWhere((m) => m.id == updated.id);
+    if (i != -1) list[i] = updated;
     notifyListeners();
   }
 
+  // ---------------- Messaging: contacts (people only) ----------------
+
+  Future<Contact> addContact({required String name, required String info, String group = ''}) async {
+    final json = await _api.post('/contacts', {'name': name, 'info': info, 'group': group});
+    final c = Contact.fromApi(json);
+    contacts.add(c);
+    notifyListeners();
+    return c;
+  }
+
+  Future<void> updateContact(String id, {String? name, String? info, String? group, bool? muted, bool? pinned}) async {
+    final json = await _api.patch('/contacts/$id', {
+      if (name != null) 'name': name,
+      if (info != null) 'info': info,
+      if (group != null) 'group': group,
+      if (muted != null) 'muted': muted,
+      if (pinned != null) 'pinned': pinned,
+    });
+    final i = contacts.indexWhere((c) => c.id == id);
+    if (i == -1) return;
+    final old = contacts[i];
+    final fresh = Contact.fromApi(json);
+    fresh.messages
+      ..clear()
+      ..addAll(old.messages);
+    fresh.historyLoaded = old.historyLoaded;
+    contacts[i] = fresh;
+    notifyListeners();
+  }
+
+  Future<void> deleteContact(String id) async {
+    await _api.delete('/contacts/$id');
+    contacts.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  Future<void> clearContactHistory(String id) async {
+    await _api.delete('/contacts/$id/messages');
+    final c = contacts.firstWhere((c) => c.id == id);
+    c.messages.clear();
+    c.historyLoaded = true;
+    notifyListeners();
+  }
+
+  /// Loads the full history (the server also marks the room as read).
   Future<void> ensureContactMessagesLoaded(String contactId) async {
     final contact = contacts.firstWhere((c) => c.id == contactId);
-    if (contact.historyLoaded) return;
-    final msgs = await _api.get('/contacts/$contactId/messages') as List;
-    contact.messages
-      ..clear()
-      ..addAll(msgs.map((j) => ChatMessage(
-            id: j['id'].toString(),
-            sender: j['sender'] == 'user' ? SenderKind.user : SenderKind.contact,
-            text: j['text'] as String,
-            timestamp: DateTime.tryParse(j['createdAt']?.toString() ?? '') ?? DateTime.now(),
-          )));
+    if (contact.historyLoaded) {
+      if (contact.unread != 0) {
+        contact.unread = 0;
+        notifyListeners();
+      }
+      return;
+    }
+    await refreshContactMessages(contactId, force: true);
+  }
+
+  Future<void> refreshContactMessages(String contactId, {bool force = false}) async {
+    final idx = contacts.indexWhere((c) => c.id == contactId);
+    if (idx == -1) return;
+    final contact = contacts[idx];
+    final msgs = (await _api.get('/contacts/$contactId/messages') as List).map((j) => ChatMessage.fromApi(j)).toList();
+    final changed = force || _sig(msgs) != _sig(contact.messages);
+    contact.unread = 0;
     contact.historyLoaded = true;
+    if (changed) {
+      contact.messages
+        ..clear()
+        ..addAll(msgs);
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendContactMessage(
+    String contactId, {
+    String? text,
+    MessageKind kind = MessageKind.text,
+    Map<String, dynamic>? payload,
+    String? outputId,
+    String? replyToId,
+  }) async {
+    final json = await _api.post(
+      '/contacts/$contactId/messages',
+      _messageBody(text: text, kind: kind, payload: payload, outputId: outputId, replyToId: replyToId),
+    );
+    final contact = contacts.firstWhere((c) => c.id == contactId);
+    contact.messages.add(ChatMessage.fromApi(json));
     notifyListeners();
   }
 
-  Future<void> ensureAgentMessagesLoaded(String agentId) async {
+  Future<void> reactContactMessage(String contactId, String messageId, String emoji) async {
+    final json = await _api.patch('/contacts/$contactId/messages/$messageId/reaction', {'emoji': emoji});
+    _replaceMessage(contacts.firstWhere((c) => c.id == contactId).messages, json);
+  }
+
+  Future<void> deleteContactMessage(String contactId, String messageId) async {
+    final json = await _api.delete('/contacts/$contactId/messages/$messageId');
+    _replaceMessage(contacts.firstWhere((c) => c.id == contactId).messages, json);
+  }
+
+  Future<void> saveContactMessage(String contactId, String messageId) async {
+    final json = await _api.post('/contacts/$contactId/messages/$messageId/save');
+    _replaceMessage(contacts.firstWhere((c) => c.id == contactId).messages, json);
+  }
+
+  // ---------------- Messaging: agents (scoped to the Orchestrator's workflow) ----------------
+
+  Future<void> ensureAgentMessagesLoaded(String agentId, {bool force = false}) async {
     final agent = agents.firstWhere((a) => a.id == agentId);
-    if (agent.detailLoaded) return;
+    if (agent.detailLoaded && !force) return;
     final results = await Future.wait([
       _api.get('/agents/$agentId/messages'),
       _api.get('/agents/$agentId/activity'),
@@ -227,21 +359,142 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendAgentCommand(String agentId, String text) async {
+  Future<void> refreshAgentMessages(String agentId) async {
+    final idx = agents.indexWhere((a) => a.id == agentId);
+    if (idx == -1) return;
+    final agent = agents[idx];
+    final msgs = (await _api.get('/agents/$agentId/messages') as List).map((j) => ChatMessage.fromApi(j)).toList();
+    if (_sig(msgs) != _sig(agent.messages)) {
+      agent.messages
+        ..clear()
+        ..addAll(msgs);
+      agent.detailLoaded = true;
+      notifyListeners();
+    }
+  }
+
+  /// Returns the server's scope verdict: in_scope | out_of_scope | status.
+  Future<String> sendAgentMessage(
+    String agentId, {
+    String? text,
+    MessageKind kind = MessageKind.text,
+    Map<String, dynamic>? payload,
+    String? outputId,
+    String? replyToId,
+  }) async {
+    final json = await _api.post(
+      '/agents/$agentId/messages',
+      _messageBody(text: text, kind: kind, payload: payload, outputId: outputId, replyToId: replyToId),
+    );
     final agent = agents.firstWhere((a) => a.id == agentId);
-    await _api.post('/agents/$agentId/messages', {'text': text});
-    agent.messages.add(ChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), sender: SenderKind.user, text: text));
+    agent.messages.add(ChatMessage.fromApi(json['message'] as Map<String, dynamic>));
     notifyListeners();
-    // The backend inserts a scripted reply ~700ms later — poll once for it.
-    Future.delayed(const Duration(milliseconds: 900), () async {
-      try {
-        final msgs = await _api.get('/agents/$agentId/messages') as List;
-        agent.messages
-          ..clear()
-          ..addAll(msgs.map((j) => ChatMessage.fromApi(j)));
-        notifyListeners();
-      } catch (_) {}
-    });
+    return json['scope'] as String? ?? 'status';
+  }
+
+  Future<void> reactAgentMessage(String agentId, String messageId, String emoji) async {
+    final json = await _api.patch('/agents/$agentId/messages/$messageId/reaction', {'emoji': emoji});
+    _replaceMessage(agents.firstWhere((a) => a.id == agentId).messages, json);
+  }
+
+  Future<void> deleteAgentMessage(String agentId, String messageId) async {
+    final json = await _api.delete('/agents/$agentId/messages/$messageId');
+    _replaceMessage(agents.firstWhere((a) => a.id == agentId).messages, json);
+  }
+
+  Future<void> saveAgentMessage(String agentId, String messageId) async {
+    final json = await _api.post('/agents/$agentId/messages/$messageId/save');
+    _replaceMessage(agents.firstWhere((a) => a.id == agentId).messages, json);
+  }
+
+  // ---------------- Orchestrator (creates agents, defines their workflows) ----------------
+
+  Future<void> loadOrchestrator() async {
+    final list = await _api.get('/orchestrator/messages') as List;
+    orchMessages
+      ..clear()
+      ..addAll(list.map((j) => OrchMessage.fromApi(j)));
+    orchLoaded = true;
+    notifyListeners();
+  }
+
+  /// Polls for new thread messages. When agents/workflows were created or
+  /// changed, the local lists are refreshed too so they show up in the tabs.
+  Future<void> refreshOrchestrator() async {
+    if (!orchLoaded || orchMessages.isEmpty) {
+      await loadOrchestrator();
+      return;
+    }
+    final list = await _api.get('/orchestrator/messages?after=${orchMessages.last.id}') as List;
+    if (list.isEmpty) return;
+    final fresh = list.map((j) => OrchMessage.fromApi(j)).toList();
+    orchMessages.addAll(fresh);
+    var agentsChanged = false;
+    var workflowsChanged = false;
+    for (final m in fresh) {
+      if (m.kind == OrchKind.agentCreated || m.kind == OrchKind.workflowUpdated || m.kind == OrchKind.agentResult) agentsChanged = true;
+      if (m.kind == OrchKind.plan || m.kind == OrchKind.result) {
+        agentsChanged = true;
+        workflowsChanged = true;
+      }
+      final terminal = m.sender == 'orchestrator' &&
+          (m.kind == OrchKind.agentCreated || m.kind == OrchKind.workflowUpdated || m.kind == OrchKind.result || m.kind == OrchKind.text);
+      if (terminal) orchWaiting = false;
+    }
+    if (agentsChanged) await _refreshAgents();
+    if (workflowsChanged) await _refreshWorkflows();
+    notifyListeners();
+  }
+
+  /// Throws [ApiException] (409) if the Orchestrator is still busy.
+  Future<void> sendOrchestrator(String text) async {
+    if (!orchLoaded) await loadOrchestrator();
+    final json = await _api.post('/orchestrator/messages', {'text': text});
+    orchMessages.add(OrchMessage.fromApi(json['message'] as Map<String, dynamic>));
+    orchWaiting = true;
+    notifyListeners();
+  }
+
+  Future<void> saveOrchestratorResult(String messageId) async {
+    await _api.post('/orchestrator/messages/$messageId/save');
+    final m = orchMessages.firstWhere((x) => x.id == messageId);
+    m.saved = true;
+    final outs = await _api.get('/vault/outputs') as List;
+    outputs
+      ..clear()
+      ..addAll(outs.map((j) => VaultOutput.fromApi(j)));
+    _resolveNames();
+    notifyListeners();
+  }
+
+  Future<void> _refreshAgents() async {
+    final fresh = (await _api.get('/agents') as List).map((j) => Agent.fromApi(j)).toList();
+    for (final a in fresh) {
+      final i = agents.indexWhere((o) => o.id == a.id);
+      if (i != -1) {
+        final old = agents[i];
+        a.messages.addAll(old.messages);
+        a.activityLog.addAll(old.activityLog);
+        a.memoryNotes.addAll(old.memoryNotes);
+        a.detailLoaded = old.detailLoaded;
+      }
+    }
+    agents
+      ..clear()
+      ..addAll(fresh);
+    _resolveNames();
+  }
+
+  Future<void> _refreshWorkflows() async {
+    final fresh = (await _api.get('/workflows') as List).map((j) => Workflow.fromApiSummary(j)).toList();
+    final merged = fresh.map((f) {
+      final i = workflows.indexWhere((o) => o.id == f.id);
+      return (i != -1 && workflows[i].graphLoaded) ? workflows[i] : f;
+    }).toList();
+    workflows
+      ..clear()
+      ..addAll(merged);
+    _resolveNames();
   }
 
   // ---------------- Consent / Approval ----------------

@@ -1,6 +1,6 @@
 import 'chat_models.dart';
 
-enum AgentActivityState { idle, monitoring, working, waitingApproval, scheduled, error }
+enum AgentActivityState { idle, ready, monitoring, working, waitingApproval, scheduled, error }
 
 class AgentPermission {
   final String label; // e.g. "Read campaign analytics"
@@ -18,6 +18,9 @@ class Agent {
   String currentActivity; // e.g. "Monitoring Campaign Alpha"
   final List<AgentPermission> permissions;
   final List<String> automationSummary; // e.g. "Daily at 09:00"
+  /// Workflow steps defined by the Orchestrator. The agent's chat may only
+  /// act inside these steps (enforced server-side too).
+  final List<String> workflow;
   final List<ChatMessage> messages;
   final List<String> activityLog;
   final List<String> memoryNotes;
@@ -34,6 +37,7 @@ class Agent {
     this.currentActivity = 'No active task',
     List<AgentPermission>? permissions,
     List<String>? automationSummary,
+    List<String>? workflow,
     List<ChatMessage>? messages,
     List<String>? activityLog,
     List<String>? memoryNotes,
@@ -41,6 +45,7 @@ class Agent {
     this.detailLoaded = false,
   })  : permissions = permissions ?? [],
         automationSummary = automationSummary ?? [],
+        workflow = workflow ?? [],
         messages = messages ?? [],
         activityLog = activityLog ?? [],
         memoryNotes = memoryNotes ?? [];
@@ -63,6 +68,7 @@ class Agent {
         state: _stateFromApi(json['state'] as String? ?? 'idle'),
         currentActivity: json['currentActivity'] as String? ?? 'No active task',
         permissions: ((json['permissions'] as List?) ?? []).map((p) => AgentPermission(p.toString())).toList(),
+        workflow: ((json['workflow'] as List?) ?? []).map((e) => e.toString()).toList(),
         apiNeedsAttention: json['needsAttention'] as bool? ?? false,
       );
 }
