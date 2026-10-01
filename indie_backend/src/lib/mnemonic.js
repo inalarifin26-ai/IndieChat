@@ -1,32 +1,27 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const crypto = require('node:crypto');
-
-const WORDS = fs
-  .readFileSync(path.join(__dirname, 'bip39-english.txt'), 'utf8')
-  .split('\n')
-  .map((w) => w.trim())
-  .filter(Boolean);
+const bip39 = require('bip39');
 
 /**
- * Generates a 12-word recovery phrase drawn uniformly at random from the
- * standard BIP-39 English wordlist (2048 words -> ~11 bits/word, 132 bits
- * total). This is a simplified generator for the MVP: it does NOT implement
- * full BIP-39 (no checksum word derived from entropy), so phrases here are
- * not interchangeable with a real BIP-39/HD-wallet implementation. Swap in
- * a proper `bip39` library before using this for anything beyond the demo.
+ * Generates a real BIP-39 recovery phrase: 12 words, 128 bits of entropy,
+ * with the standard checksum word baked in (bip39.generateMnemonic checks
+ * entropy via crypto.randomBytes under the hood). Interoperable with any
+ * other BIP-39 implementation — unlike the earlier uniform-random-word MVP
+ * version, a phrase from here can be validated independently.
  */
 function generateRecoveryPhrase(wordCount = 12) {
-  const words = [];
-  for (let i = 0; i < wordCount; i++) {
-    const idx = crypto.randomInt(0, WORDS.length);
-    words.push(WORDS[idx]);
-  }
-  return words.join(' ');
+  const bitsPerWord = 11;
+  const checksumBits = wordCount / 3;
+  const entropyBits = wordCount * bitsPerWord - checksumBits;
+  return bip39.generateMnemonic(entropyBits);
 }
 
 function normalizePhrase(phrase) {
-  return phrase.trim().toLowerCase().split(/\s+/).join(' ');
+  return bip39.default ? phrase : phrase.trim().toLowerCase().split(/\s+/).join(' ');
 }
 
-module.exports = { generateRecoveryPhrase, normalizePhrase, WORDS };
+function isValidPhrase(phrase) {
+  return bip39.validateMnemonic(normalizePhrase(phrase));
+}
+
+const WORDS = bip39.wordlists.english;
+
+module.exports = { generateRecoveryPhrase, normalizePhrase, isValidPhrase, WORDS };

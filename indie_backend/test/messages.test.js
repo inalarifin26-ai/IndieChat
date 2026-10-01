@@ -224,3 +224,21 @@ test('isolation: another account cannot touch messages or orchestrator results',
   const m = (await api('GET', '/orchestrator/messages', a)).body[0];
   assert.strictEqual((await api('POST', `/orchestrator/messages/${m.id}/save`, b)).status, 404);
 });
+
+test('recovery phrase is real BIP-39 (interoperable checksum, not just 12 random words)', async () => {
+  const bip39 = require('bip39');
+  const reg = await api('POST', '/auth/register', null, { credential: 'checksum-test-cred' });
+  const phrase = reg.body.recoveryPhrase;
+  assert.strictEqual(phrase.split(' ').length, 12);
+  assert.strictEqual(bip39.validateMnemonic(phrase), true, 'phrase must pass independent BIP-39 validation');
+
+  // Recovery rejects a phrase with a broken checksum before even touching the DB.
+  const words = phrase.split(' ');
+  words[0] = words[0] === 'zoo' ? 'abandon' : 'zoo'; // corrupt one word
+  const bad = await api('POST', '/auth/recover', null, { personalId: reg.body.personalId, recoveryPhrase: words.join(' '), newCredential: 'new-credential-1' });
+  assert.strictEqual(bad.status, 401);
+
+  // The real phrase still works.
+  const good = await api('POST', '/auth/recover', null, { personalId: reg.body.personalId, recoveryPhrase: phrase, newCredential: 'new-credential-2' });
+  assert.strictEqual(good.status, 200);
+});

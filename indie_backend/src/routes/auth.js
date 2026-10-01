@@ -3,7 +3,7 @@ const crypto = require('node:crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { hashSecret, verifySecret } = require('../lib/secret');
-const { generateRecoveryPhrase, normalizePhrase } = require('../lib/mnemonic');
+const { generateRecoveryPhrase, normalizePhrase, isValidPhrase } = require('../lib/mnemonic');
 const { generatePersonalId } = require('../lib/personalId');
 const { JWT_SECRET, requireAuth } = require('../middleware/auth');
 const { logAudit } = require('../lib/audit');
@@ -100,6 +100,11 @@ router.post('/recover', (req, res) => {
   const { personalId, recoveryPhrase, newCredential } = req.body || {};
   if (!newCredential || String(newCredential).length < 6) {
     return res.status(400).json({ error: 'newCredential must be at least 6 characters' });
+  }
+  // Reject a malformed phrase before even touching the DB (defense in
+  // depth — the scrypt hash comparison below is the real check).
+  if (!recoveryPhrase || !isValidPhrase(String(recoveryPhrase))) {
+    return res.status(401).json({ error: 'Invalid Personal ID or recovery phrase' });
   }
   const user = db.prepare('SELECT * FROM users WHERE personal_id = ?').get(personalId);
   if (!user || !verifySecret(normalizePhrase(recoveryPhrase || ''), user.recovery_hash, user.recovery_salt)) {

@@ -157,20 +157,23 @@ Invariant 2 in the skill file.
 
 ## Simplifications called out on purpose (read before treating this as final)
 
-- **Recovery phrase generation is NOT full BIP-39.** It draws 12 words
-  uniformly at random from the real BIP-39 English wordlist (so the words
-  look and feel standard), but it skips the checksum-word derivation from
-  entropy that real BIP-39/HD-wallet tooling relies on. Swap in the `bip39`
-  npm package before treating these phrases as interoperable with wallet
-  software.
+- ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
+  real `bip39` npm package (128 bits of entropy, real checksum word,
+  independently verifiable with `bip39.validateMnemonic`).
 - **The local "device credential" is taken as a plain request-body field**
   for MVP simplicity. A production client should derive this from a
   device-bound secret/biometric unlock rather than a typed password sent
   over the wire on every login.
-- **Node execution order is insertion order** (SQLite `rowid`), not a real
-  graph traversal of `workflow_connections` with condition-branch
-  evaluation. Fine for the seeded linear demo workflows; a real Execution
-  Engine needs topological execution — see COMMAND 08.
+- ~~Node execution order is insertion order~~ **Fixed:** `lib/executionEngine.js`
+  now does a real topological walk of `workflow_connections` — independent
+  branches run in parallel, a node waits for every incoming edge before
+  starting (fan-in), and a `logic` node with multiple distinct
+  `branch_label`s picks one branch and marks the sibling branch — and
+  anything only reachable through it — `skipped`, cascading correctly.
+  One simplification remains: the branch choice is deterministic
+  (alphabetically-first label), not a real condition evaluation — swap that
+  one function (`applyBranchSkip`) for real logic once nodes carry an actual
+  expression to evaluate.
 - **The approval flow doesn't yet know which node "belongs" to which
   agent** — it attributes a pending approval to the user's first agent as a
   demo shortcut. A real node needs an explicit `agent_id` column.
@@ -180,6 +183,28 @@ Invariant 2 in the skill file.
   the in-memory `EventEmitter` map in `lib/executionEngine.js`.
 - **No rate limiting, no HTTPS termination, no connector OAuth** yet — this
   is a skeleton, not a hardened deployment. See COMMAND 19 before shipping.
+
+
+
+## Execution Engine (real graph traversal)
+
+`lib/executionEngine.js` walks `workflow_connections` as an actual directed
+graph rather than SQLite insertion order:
+
+- **Parallel branches** — two nodes fed only by the trigger start and run
+  at the same time, not one after another.
+- **Fan-in** — a node with multiple incoming edges only starts once *every*
+  one of them has finished.
+- **Branch skipping** — a `logic` node with more than one distinct
+  `branch_label` on its outgoing edges picks one branch; the sibling
+  branch's target, and anything downstream that's *only* reachable through
+  it, is marked `skipped` rather than run. A node still fed by another path
+  is left alone (no false-positive skips).
+- **Approval nodes** still pause the whole execution and resume exactly
+  where the spec describes, now compatible with the branching above.
+
+Covered by `test/execution.test.js`: parallel fan-out/fan-in timing, branch
+skip + cascade, and a node that stays fed by a non-skipped path.
 
 ## Project structure
 
@@ -204,12 +229,14 @@ test/
 
 ## Next steps (in priority order)
 
-1. Point the Flutter app at this backend instead of its in-memory mock data
-   (see the Flutter package's updated README for the API client wiring).
-2. Real `bip39` package for the recovery phrase.
-3. A proper topological Execution Engine that follows `workflow_connections`
-   and evaluates `logic`/condition nodes, instead of insertion-order.
-4. One real external connector (e.g. Google Calendar) behind a Permission
+1. ~~Point the Flutter app at this backend~~ Done — see the Flutter
+   package's README for the API client wiring.
+2. ~~Real `bip39` package~~ Done.
+3. ~~Topological Execution Engine~~ Done — real condition evaluation (not
+   just alphabetical-first) is the one piece still open, see above.
+4. Wire one real AI Agent to an actual model call (agents currently give
+   scripted replies).
+5. One real external connector (e.g. Google Calendar) behind a Permission
    Gateway, with OAuth and scoped, revocable tokens.
-5. Move `JWT_SECRET` and friends to a real secrets manager before any
+6. Move `JWT_SECRET` and friends to a real secrets manager before any
    non-local deployment.
