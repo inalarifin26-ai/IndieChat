@@ -155,6 +155,33 @@ not a `403` (so a workflow ID leaking to the wrong account doesn't even
 confirm the row exists) — see COMMAND 19 "Security Review" /
 Invariant 2 in the skill file.
 
+## Real AI model replies (optional, opt-in)
+
+Set `ANTHROPIC_API_KEY` in `.env` to make every agent chat reply with a real
+Claude response instead of the scripted template — `lib/aiModel.js` sends
+the agent's name, role and **exact Orchestrator-defined workflow** as the
+system prompt, with instructions to refuse anything outside it. With no key
+set, nothing changes: agents keep using the scripted `lib/agentScope.js`
+engine, exactly as before.
+
+```bash
+# .env
+ANTHROPIC_API_KEY=sk-ant-...
+# ANTHROPIC_MODEL=claude-haiku-4-5-20251001   # optional override
+```
+
+Notes:
+- The deterministic scope check (`lib/agentScope.js`) **always** runs
+  first and is what the API response's `scope` field and the audit log are
+  based on — the live model's reply is additive narration, not a
+  replacement for that enforcement.
+- If the model call fails for any reason (network, bad key, rate limit),
+  the route logs an `agent_model_error` audit event and **falls back to the
+  scripted reply** automatically — a user never sees an error because of it.
+- `test/aiModel.test.js` covers the prompt construction, the live-reply
+  path, and the fallback path, all with `fetch` mocked — no real API key is
+  needed to run `npm test`.
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
@@ -234,8 +261,10 @@ test/
 2. ~~Real `bip39` package~~ Done.
 3. ~~Topological Execution Engine~~ Done — real condition evaluation (not
    just alphabetical-first) is the one piece still open, see above.
-4. Wire one real AI Agent to an actual model call (agents currently give
-   scripted replies).
+4. ~~Wire one real AI Agent to an actual model call~~ Done — see "Real AI
+   model replies" above (opt-in via `ANTHROPIC_API_KEY`). The Orchestrator's
+   own instruction parsing is still pattern-based, not model-driven — a
+   good next target.
 5. One real external connector (e.g. Google Calendar) behind a Permission
    Gateway, with OAuth and scoped, revocable tokens.
 6. Move `JWT_SECRET` and friends to a real secrets manager before any

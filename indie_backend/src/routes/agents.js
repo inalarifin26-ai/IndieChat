@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const { logAudit } = require('../lib/audit');
 const { serializeMessage, setReaction, buildAttachment } = require('../lib/messages');
 const { evaluate, resultCard } = require('../lib/agentScope');
+const aiModel = require('../lib/aiModel');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -88,14 +89,28 @@ router.post('/:id/messages', (req, res) => {
   }
   logAudit(req.userId, 'agent_command_sent', `agent=${a.id} kind=${att.kind}`);
 
-  // Scope check happens on the server: the text (or attachment name) is
+  // Scope check always runs server-side: the text (or attachment name) is
   // matched against the workflow the Orchestrator defined for this agent.
+  // This is the deterministic source of truth for `scope` in the response
+  // and for the audit log, regardless of whether a real model is used.
   const subject = att.kind === 'file' ? att.payload.file.name : att.kind === 'output' ? att.payload.output.title : att.text;
-  const verdict = evaluate(a, stepsOf(a.id), subject);
-  logAudit(req.userId, 'agent_scope_check', `agent=${a.id} result=${verdict.kind}`);
+  const steps = stepsOf(a.id);
+  const verdict = evaluate(a, steps, subject);
+  logAudit(req.userId, 'agent_scope_check', `agent=${a.id} result=${verdict.kind} model=${aiModel.isConfigured() ? 'live' : 'scripted'}`);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
+      if (aiModel.isConfigured()) {
+        try {
+          const history = db.prepare(`SELECT * FROM ${T} WHERE agent_id = ? ORDER BY created_at ASC, rowid ASC`).all(a.id);
+          const text = await aiModel.generateReply({ agent: a, steps, history });
+          insertAgentMessage(req.userId, a.id, 'agent', 'text', text, verdict.kind === 'out_of_scope' ? { cta: 'ask_orchestrator' } : null);
+          return;
+        } catch (err) {
+          logAudit(req.userId, 'agent_model_error', `agent=${a.id} error=${String(err.message || err).slice(0, 200)}`);
+          // fall through to the scripted reply below
+        }
+      }
       insertAgentMessage(req.userId, a.id, 'agent', 'text', verdict.text, verdict.payload || null);
       if (verdict.kind === 'in_scope') {
         setTimeout(() => {

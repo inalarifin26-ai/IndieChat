@@ -12,7 +12,7 @@
     "start": "node --experimental-sqlite src/index.js",
     "dev": "node --experimental-sqlite --watch src/index.js",
     "seed": "node --experimental-sqlite src/seed.js",
-    "test": "node --experimental-sqlite --test test/smoke.test.js test/messages.test.js test/execution.test.js"
+    "test": "node --experimental-sqlite --test test/smoke.test.js test/messages.test.js test/execution.test.js test/aiModel.test.js"
   },
   "dependencies": {
     "bip39": "^3.1.0",
