@@ -233,6 +233,24 @@ Design notes:
   currently just a label) — that's the natural next increment once this
   connector pattern is proven out.
 
+
+### Wired to a real agent workflow step: "Read your calendar"
+
+The seeded **Personal Assistant** agent's workflow includes `Read your
+calendar`. When a message to that agent matches this step (via the same
+`lib/agentScope.js` keyword match used for everything else), the route calls
+`gcal.listUpcomingEvents` through the Permission Gateway instead of giving a
+narrated reply (scripted or model-generated):
+
+- **Connected** → replies with a card of real upcoming events.
+- **Not connected** → a friendly message pointing to *More → Connectors*,
+  using the same `NOT_CONNECTED`/`NEEDS_RECONNECT` error codes as the raw API.
+- Still refuses anything outside the Personal Assistant's workflow exactly
+  as before — the connector only changes *how* an in-scope calendar request
+  is fulfilled, not the scope boundary itself.
+
+See `test/calendarAgent.test.js` for all three cases, Google mocked.
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
@@ -316,8 +334,10 @@ test/
    model replies" above (opt-in via `ANTHROPIC_API_KEY`). The Orchestrator's
    own instruction parsing is still pattern-based, not model-driven — a
    good next target.
-5. ~~One real external connector behind a Permission Gateway~~ Done — see
-   "External connectors" above (Google Calendar, OAuth, encrypted +
-   revocable tokens). Not yet wired into an actual agent workflow step.
+5. ~~One real external connector behind a Permission Gateway~~ Done, and
+   ~~wired into an actual agent workflow step~~ also done — see "Wired to a
+   real agent workflow step" above.
 6. Move `JWT_SECRET`, `CONNECTOR_ENC_KEY` and friends to a real secrets
    manager before any non-local deployment.
+7. More connectors (Gmail, Drive, …) following the same Permission Gateway
+   pattern `lib/connectors/googleCalendar.js` established.

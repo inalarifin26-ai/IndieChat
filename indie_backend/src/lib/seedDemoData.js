@@ -119,6 +119,20 @@ function seedDemoData(userId) {
     card: { title: 'Cash Flow Report — Week 39', metrics: [['Net cash flow', 'Rp 18.4jt', '↑ 6%'], ['Outstanding', '3 invoices', '']], insights: ['3 invoices still outstanding', 'Cash position improved week-over-week'] },
   });
 
+  const assistantId = uuid();
+  db.prepare(
+    `INSERT INTO agents (id, user_id, name, role, glyph, accent_hex, state, current_activity, created_at)
+     VALUES (?, ?, 'Personal Assistant', 'Scheduling & daily brief', 'P', 'B48CFF', 'idle', 'No active task', ?)`
+  ).run(assistantId, userId, now);
+  ['Read calendar'].forEach((label) =>
+    db.prepare('INSERT INTO agent_permissions (id, user_id, agent_id, label) VALUES (?, ?, ?, ?)').run(uuid(), userId, assistantId, label)
+  );
+  // "Read your calendar" is handled specially in routes/agents.js: when this
+  // step matches, the agent calls the real Google Calendar connector
+  // (if connected) through the Permission Gateway instead of a scripted
+  // reply — see lib/connectors/googleCalendar.js.
+  setSteps(userId, assistantId, ['Read your calendar', 'Prepare daily brief', 'Send reminders']);
+
   // Workflow: Daily Marketing Report (active, with an approval node)
   const wfId = uuid();
   db.prepare(

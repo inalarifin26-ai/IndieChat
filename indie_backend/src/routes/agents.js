@@ -6,6 +6,7 @@ const { logAudit } = require('../lib/audit');
 const { serializeMessage, setReaction, buildAttachment } = require('../lib/messages');
 const { evaluate, resultCard } = require('../lib/agentScope');
 const aiModel = require('../lib/aiModel');
+const gcal = require('../lib/connectors/googleCalendar');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -46,6 +47,28 @@ function insertAgentMessage(userId, agentId, sender, kind, text, payload, extra 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(id, userId, agentId, sender, kind, text, payload ? JSON.stringify(payload) : null, new Date().toISOString(), extra.replyToId || null);
   return id;
+}
+
+async function replyWithCalendar(userId, agent) {
+  try {
+    const events = await gcal.listUpcomingEvents(userId, { maxResults: 5 });
+    if (!events.length) {
+      insertAgentMessage(userId, agent.id, 'agent', 'text', "Checked your calendar — you don't have any upcoming events.");
+      return;
+    }
+    insertAgentMessage(userId, agent.id, 'agent', 'card', '', {
+      card: {
+        title: 'Upcoming calendar events',
+        insights: events.map((e) => `${e.title} — ${new Date(e.start).toLocaleString()}`),
+      },
+    });
+  } catch (err) {
+    const hint =
+      err.code === 'NOT_CONNECTED' || err.code === 'NEEDS_RECONNECT'
+        ? ' Connect it under More → Connectors, then ask me again.'
+        : '';
+    insertAgentMessage(userId, agent.id, 'agent', 'text', `I can't reach your calendar right now (${err.message}).${hint}`);
+  }
 }
 
 router.get('/', (req, res) => {
@@ -100,6 +123,14 @@ router.post('/:id/messages', (req, res) => {
 
   setTimeout(async () => {
     try {
+      // A workflow step that reads the calendar is handled by calling the
+      // real connector through the Permission Gateway, instead of narration
+      // (scripted or model-generated) — this is the one step in the demo
+      // seed data wired to an actual external action end to end.
+      if (verdict.kind === 'in_scope' && /calendar/i.test(verdict.hit || '')) {
+        await replyWithCalendar(req.userId, a);
+        return;
+      }
       if (aiModel.isConfigured()) {
         try {
           const history = db.prepare(`SELECT * FROM ${T} WHERE agent_id = ? ORDER BY created_at ASC, rowid ASC`).all(a.id);
