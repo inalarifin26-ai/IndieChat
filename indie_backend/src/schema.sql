@@ -211,3 +211,28 @@ CREATE TABLE IF NOT EXISTS orchestrator_messages (
   saved             INTEGER DEFAULT 0,
   created_at        TEXT NOT NULL
 );
+
+-- External connectors (COMMAND 14): Agent -> Permission Gateway -> Connector
+-- -> Scoped External Access -> Result. One row per user+provider; tokens are
+-- encrypted at rest (see lib/encryption.js) and every connector supports
+-- revocation (DELETE /connectors/:provider).
+CREATE TABLE IF NOT EXISTS connectors (
+  id                    TEXT PRIMARY KEY,
+  user_id               TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider              TEXT NOT NULL,         -- 'google_calendar'
+  scope                 TEXT NOT NULL,
+  access_token_enc      TEXT NOT NULL,
+  refresh_token_enc     TEXT,
+  expires_at            TEXT,
+  connected_at          TEXT NOT NULL,
+  revoked_at            TEXT,
+  UNIQUE(user_id, provider)
+);
+
+-- Short-lived CSRF-protection state for the OAuth redirect round trip.
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state                 TEXT PRIMARY KEY,
+  user_id               TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider              TEXT NOT NULL,
+  created_at            TEXT NOT NULL
+);

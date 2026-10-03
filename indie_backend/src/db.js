@@ -43,4 +43,9 @@ ensureColumns('contacts', [
   ['unread', 'INTEGER DEFAULT 0'],
 ]);
 
+// connectors / oauth_states are new tables (added by schema.sql on every
+// boot via CREATE TABLE IF NOT EXISTS), so no ALTER TABLE migration is
+// needed for them specifically — listed here only as a reminder for future
+// column additions to those tables.
+
 module.exports = db;

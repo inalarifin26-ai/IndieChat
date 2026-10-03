@@ -182,6 +182,57 @@ Notes:
   path, and the fallback path, all with `fetch` mocked — no real API key is
   needed to run `npm test`.
 
+
+## External connectors (optional, opt-in) — Google Calendar
+
+The first real connector behind a Permission Gateway (COMMAND 14:
+Agent → Permission Gateway → Connector → Scoped External Access → Result).
+Fully opt-in: with no Google credentials set, `/connectors` still lists the
+connector as `configured: false` and every action returns a clear `501`/`409`
+instead of breaking.
+
+```bash
+# .env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:4000/connectors/google_calendar/callback
+CONNECTOR_ENC_KEY=some-long-random-string   # encrypts tokens at rest
+```
+
+Set those up in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+(OAuth client ID, type "Web application"; add the redirect URI there too).
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/connectors` | Every known connector + whether this account connected it |
+| GET | `/connectors/:provider/authorize` | Returns `{ url }` — the client opens it; the person approves on Google's own consent screen, never inside Indie |
+| GET | `/connectors/:provider/callback` | **Public** (no bearer token — it's a browser redirect from Google). Resolves the user from a one-time `state` row instead |
+| DELETE | `/connectors/:provider` | Revokes with Google (best-effort) and always clears the local connection |
+| GET | `/connectors/google_calendar/events` | Example scoped action behind the gateway — lists upcoming events |
+
+Design notes:
+- **Tokens are encrypted at rest** (AES-256-GCM, `lib/encryption.js`) —
+  verified in tests by asserting the raw access/refresh token strings never
+  appear in the stored row or in any API response.
+- **The OAuth `state` is single-use** — replaying the same callback URL a
+  second time is rejected (CSRF protection), also tested.
+- **Expired access tokens refresh transparently** the next time the
+  Permission Gateway (`getValidAccessToken`) is asked for one — callers
+  never see the expiry, only `NOT_CONNECTED` or `NEEDS_RECONNECT` if there's
+  truly no valid path to a token.
+- A bug the test suite caught before you would have: the callback route was
+  initially behind the same `requireAuth` middleware as the rest of the
+  router, which would have made the entire OAuth flow permanently
+  unusable (Google's redirect never carries your app's bearer token).
+  Fixed by applying `requireAuth` per-route instead of router-wide — the
+  callback resolves identity from its own one-time `state` row.
+- `test/connectors.test.js` covers all of the above with Google's token,
+  revoke and Calendar endpoints mocked — no real OAuth client or network
+  access is needed to run `npm test`.
+- Not yet wired to an actual agent workflow step ("Read your calendar" is
+  currently just a label) — that's the natural next increment once this
+  connector pattern is proven out.
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
@@ -265,7 +316,8 @@ test/
    model replies" above (opt-in via `ANTHROPIC_API_KEY`). The Orchestrator's
    own instruction parsing is still pattern-based, not model-driven — a
    good next target.
-5. One real external connector (e.g. Google Calendar) behind a Permission
-   Gateway, with OAuth and scoped, revocable tokens.
-6. Move `JWT_SECRET` and friends to a real secrets manager before any
-   non-local deployment.
+5. ~~One real external connector behind a Permission Gateway~~ Done — see
+   "External connectors" above (Google Calendar, OAuth, encrypted +
+   revocable tokens). Not yet wired into an actual agent workflow step.
+6. Move `JWT_SECRET`, `CONNECTOR_ENC_KEY` and friends to a real secrets
+   manager before any non-local deployment.
