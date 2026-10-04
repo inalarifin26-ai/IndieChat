@@ -131,7 +131,7 @@ function seedDemoData(userId) {
   // step matches, the agent calls the real Google Calendar connector
   // (if connected) through the Permission Gateway instead of a scripted
   // reply — see lib/connectors/googleCalendar.js.
-  setSteps(userId, assistantId, ['Read your calendar', 'Prepare daily brief', 'Send reminders']);
+  setSteps(userId, assistantId, ['Read your calendar', 'Summarize unread emails', 'Prepare daily brief', 'Send reminders']);
 
   // Workflow: Daily Marketing Report (active, with an approval node)
   const wfId = uuid();

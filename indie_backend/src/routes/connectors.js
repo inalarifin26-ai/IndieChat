@@ -2,13 +2,14 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const gcal = require('../lib/connectors/googleCalendar');
+const gmail = require('../lib/connectors/gmail');
 
 const router = express.Router();
 // requireAuth is applied per-route (not router-wide): the OAuth callback is
 // a plain browser redirect from Google with no bearer token — it resolves
 // the user from the one-time `state` row instead (see handleCallback).
 
-const REGISTRY = { [gcal.PROVIDER]: gcal };
+const REGISTRY = { [gcal.PROVIDER]: gcal, [gmail.PROVIDER]: gmail };
 
 function errStatus(err) {
   switch (err.code) {
@@ -78,6 +79,15 @@ router.get('/google_calendar/events', requireAuth, async (req, res) => {
   try {
     const events = await gcal.listUpcomingEvents(req.userId, { maxResults: Number(req.query.maxResults) || 10 });
     res.json(events);
+  } catch (err) {
+    res.status(errStatus(err)).json({ error: err.message, code: err.code });
+  }
+});
+
+router.get('/gmail/messages', requireAuth, async (req, res) => {
+  try {
+    const messages = await gmail.listUnread(req.userId, { maxResults: Number(req.query.maxResults) || 5 });
+    res.json(messages);
   } catch (err) {
     res.status(errStatus(err)).json({ error: err.message, code: err.code });
   }

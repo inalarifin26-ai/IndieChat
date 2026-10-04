@@ -251,6 +251,33 @@ narrated reply (scripted or model-generated):
 
 See `test/calendarAgent.test.js` for all three cases, Google mocked.
 
+## A second connector proves the pattern: Gmail
+
+`lib/connectors/googleCalendar.js` and `lib/connectors/gmail.js` now share
+`lib/connectors/googleOAuthBase.js` — the authorize URL, code exchange,
+refresh, revoke, and encrypted storage are written **once**; each connector
+is just that base wired to its own `provider` name, OAuth `scope`, and API
+call (`listUpcomingEvents` / `listUnread`). Adding a third Google-backed
+connector (Drive, say) is the same handful of lines, not another copy of
+the OAuth dance.
+
+- `GET /connectors` now lists both `google_calendar` and `gmail`
+  independently — connecting one never connects or affects the other
+  (tested).
+- `GET /connectors/gmail/messages` — lists unread inbox messages. Gmail's
+  API needs two calls (list message ids, then fetch each one); it's
+  requested with `format=metadata` and only the `Subject`/`From` headers,
+  not the full message body, in the same data-minimization spirit as the
+  read-only OAuth scope itself. A single message that fails to fetch is
+  skipped rather than failing the whole list.
+- **Wired into the Personal Assistant's workflow** the same way Calendar
+  was: the step `Summarize unread emails` calls `gmail.listUnread` through
+  the Permission Gateway when in scope, with the same
+  connected/not-connected/out-of-scope behavior — and, importantly, the two
+  connectors don't interfere: asking about email when only Calendar is
+  connected (or vice versa) still correctly reports that specific connector
+  as not connected (tested in `test/gmailConnector.test.js`).
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
@@ -339,5 +366,6 @@ test/
    real agent workflow step" above.
 6. Move `JWT_SECRET`, `CONNECTOR_ENC_KEY` and friends to a real secrets
    manager before any non-local deployment.
-7. More connectors (Gmail, Drive, …) following the same Permission Gateway
-   pattern `lib/connectors/googleCalendar.js` established.
+7. ~~More connectors following the same pattern~~ Done for Gmail — see "A
+   second connector proves the pattern" above. Drive, Slack, etc. would
+   follow the same shape.

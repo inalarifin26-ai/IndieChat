@@ -7,6 +7,7 @@ const { serializeMessage, setReaction, buildAttachment } = require('../lib/messa
 const { evaluate, resultCard } = require('../lib/agentScope');
 const aiModel = require('../lib/aiModel');
 const gcal = require('../lib/connectors/googleCalendar');
+const gmail = require('../lib/connectors/gmail');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -71,6 +72,28 @@ async function replyWithCalendar(userId, agent) {
   }
 }
 
+async function replyWithUnreadEmails(userId, agent) {
+  try {
+    const messages = await gmail.listUnread(userId, { maxResults: 5 });
+    if (!messages.length) {
+      insertAgentMessage(userId, agent.id, 'agent', 'text', "Checked your inbox — no unread messages.");
+      return;
+    }
+    insertAgentMessage(userId, agent.id, 'agent', 'card', '', {
+      card: {
+        title: 'Unread emails',
+        insights: messages.map((m) => `${m.subject} — ${m.from}`),
+      },
+    });
+  } catch (err) {
+    const hint =
+      err.code === 'NOT_CONNECTED' || err.code === 'NEEDS_RECONNECT'
+        ? ' Connect it under More → Connectors, then ask me again.'
+        : '';
+    insertAgentMessage(userId, agent.id, 'agent', 'text', `I can't reach your inbox right now (${err.message}).${hint}`);
+  }
+}
+
 router.get('/', (req, res) => {
   const rows = db.prepare('SELECT * FROM agents WHERE user_id = ? ORDER BY name ASC').all(req.userId);
   res.json(rows.map(serializeAgent));
@@ -129,6 +152,10 @@ router.post('/:id/messages', (req, res) => {
       // seed data wired to an actual external action end to end.
       if (verdict.kind === 'in_scope' && /calendar/i.test(verdict.hit || '')) {
         await replyWithCalendar(req.userId, a);
+        return;
+      }
+      if (verdict.kind === 'in_scope' && /email/i.test(verdict.hit || '')) {
+        await replyWithUnreadEmails(req.userId, a);
         return;
       }
       if (aiModel.isConfigured()) {
