@@ -41,15 +41,18 @@ function withGoogleEnv(fn) {
     const prev = {
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-      GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+      PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL,
     };
     process.env.GOOGLE_CLIENT_ID = 'test-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-    process.env.GOOGLE_REDIRECT_URI = 'http://localhost:4000/connectors/google_calendar/callback';
+    process.env.PUBLIC_BASE_URL = 'http://localhost';
     try {
       await fn(...args);
     } finally {
-      Object.assign(process.env, prev);
+      for (const [k, v] of Object.entries(prev)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
     }
   };
 }

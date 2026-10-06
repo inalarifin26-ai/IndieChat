@@ -16,14 +16,25 @@ const REVOKE_URL = 'https://oauth2.googleapis.com/revoke';
  * would get their own base module with the same shape, not this one.
  */
 function makeGoogleConnector({ provider, scope }) {
+  // Each connector has its own callback PATH (/connectors/<provider>/callback),
+  // so they cannot share one GOOGLE_REDIRECT_URI — Google would redirect
+  // every provider's consent screen to the same path, and the `state` row
+  // (looked up by provider) would never match. Instead, every connector's
+  // redirect_uri is derived from one PUBLIC_BASE_URL. Register all of the
+  // resulting URLs (one per connector) as authorized redirect URIs in the
+  // Google Cloud Console for this OAuth client.
+  function redirectUri() {
+    return `${process.env.PUBLIC_BASE_URL}/connectors/${provider}/callback`;
+  }
+
   function isConfigured() {
-    return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI);
+    return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.PUBLIC_BASE_URL);
   }
 
   function buildAuthorizeUrl(state) {
     const params = new URLSearchParams({
       client_id: process.env.GOOGLE_CLIENT_ID,
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      redirect_uri: redirectUri(),
       response_type: 'code',
       scope,
       access_type: 'offline',
@@ -52,7 +63,7 @@ function makeGoogleConnector({ provider, scope }) {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+        redirect_uri: redirectUri(),
         grant_type: 'authorization_code',
       }),
     });

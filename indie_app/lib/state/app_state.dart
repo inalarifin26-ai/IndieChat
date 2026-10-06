@@ -7,6 +7,7 @@ import '../models/agent_models.dart';
 import '../models/workflow_models.dart';
 import '../models/consent_models.dart';
 import '../models/orchestrator_models.dart';
+import '../models/connector_models.dart';
 
 const _tokenPrefsKey = 'indie_token';
 
@@ -29,6 +30,8 @@ class AppState extends ChangeNotifier {
   final List<OrchMessage> orchMessages = [];
   bool orchLoaded = false;
   bool orchWaiting = false; // an instruction is in flight; the reply arrives via polling
+
+  final List<Connector> connectors = [];
 
   final Map<String, WorkflowExecution> _liveExecutions = {};
   final Map<String, StreamSubscription> _execSubs = {};
@@ -113,6 +116,7 @@ class AppState extends ChangeNotifier {
     orchMessages.clear();
     orchLoaded = false;
     orchWaiting = false;
+    connectors.clear();
     for (final sub in _execSubs.values) {
       sub.cancel();
     }
@@ -684,6 +688,28 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
     }, onError: (_) {});
+  }
+
+  // ---------------- Connectors (external services, OAuth) ----------------
+
+  Future<void> loadConnectors() async {
+    final list = await _api.get('/connectors') as List;
+    connectors
+      ..clear()
+      ..addAll(list.map((j) => Connector.fromApi(j)));
+    notifyListeners();
+  }
+
+  /// Returns the Google consent URL to open in the browser. Throws
+  /// [ApiException] (501) if the server hasn't configured this provider.
+  Future<String> connectorAuthorizeUrl(String provider) async {
+    final json = await _api.get('/connectors/$provider/authorize');
+    return json['url'] as String;
+  }
+
+  Future<void> disconnectConnector(String provider) async {
+    await _api.delete('/connectors/$provider');
+    await loadConnectors();
   }
 
   // ---------------- Vault / Sharing ----------------

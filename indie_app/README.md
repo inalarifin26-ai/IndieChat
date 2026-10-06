@@ -110,6 +110,13 @@ there's no session yet — see below.
    (`/auth/logout`) and returns you to onboarding — try **Recover** there
    with the same recovery phrase to see the account come back with a new
    credential and every other session revoked.
+7. **More → Connectors** → real list from `GET /connectors` (Google
+   Calendar, Gmail, …). **Connect** opens the provider's own consent screen
+   in your system browser (never inside Indie); approve there, then switch
+   back to the app — it re-checks the connector list automatically when it
+   regains focus. **Disconnect** revokes it. If the backend hasn't set up
+   `GOOGLE_CLIENT_ID`/`SECRET` yet, the connector shows as "Unavailable"
+   instead of erroring.
 
 ## What's real vs. simulated
 
@@ -122,9 +129,9 @@ there's no session yet — see below.
 | Workflow Builder (drag/connect/configure/validate) | **Real** — every op is a backend call; dragging itself stays local until drop, then persists |
 | Consent/mandate/approval model | **Real** — enforced and stored server-side, scoped per account |
 | Personal Vault / outputs / Share Result | **Real** — server-side storage; the shared payload is only ever what you opted into |
-| AI Agents "thinking" | Still scripted (backend inserts a canned reply) — no LLM call yet |
-| External connectors (Calendar, Gmail, Instagram…) | Still UI only — no real OAuth/API integration |
-| Node execution order | Backend runs nodes in insertion order, not a real graph traversal — see `indie_backend`'s README |
+| External connectors (Google Calendar, Gmail) | **Real** — full OAuth round trip via the system browser; the app itself never sees or stores the tokens |
+| AI Agents "thinking" | **Real when the backend has `ANTHROPIC_API_KEY` set** — falls back to scripted replies otherwise, same as the backend's own default |
+| Node execution order | **Real** — the backend walks `workflow_connections` as an actual graph (parallel branches, fan-in, logic-node branch skipping) |
 
 ## Known rough edges (MVP-level, worth knowing before you dig in)
 

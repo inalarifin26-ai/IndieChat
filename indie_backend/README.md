@@ -195,12 +195,26 @@ instead of breaking.
 # .env
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:4000/connectors/google_calendar/callback
+PUBLIC_BASE_URL=http://localhost:4000       # this server's own reachable URL
 CONNECTOR_ENC_KEY=some-long-random-string   # encrypts tokens at rest
 ```
 
 Set those up in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-(OAuth client ID, type "Web application"; add the redirect URI there too).
+(OAuth client ID, type "Web application"). Each connector derives its own
+callback path from `PUBLIC_BASE_URL` — register **all** of the resulting
+URLs as authorized redirect URIs on that client:
+
+- `{PUBLIC_BASE_URL}/connectors/google_calendar/callback`
+- `{PUBLIC_BASE_URL}/connectors/gmail/callback`
+- `{PUBLIC_BASE_URL}/connectors/google_drive/callback`
+
+(They can't share one `GOOGLE_REDIRECT_URI` — Google would redirect every
+provider's consent screen to the same path, and the one-time `state` row,
+looked up by provider, would never match. This is also why
+`lib/connectors/googleOAuthBase.js` computes `redirect_uri` from
+`PUBLIC_BASE_URL` + the provider name rather than taking it as a single
+env var — a bug the test suite would have caught the first time a second
+connector's OAuth flow was exercised for real.)
 
 | Method | Path | Notes |
 |---|---|---|
@@ -277,6 +291,16 @@ the OAuth dance.
   connectors don't interfere: asking about email when only Calendar is
   connected (or vice versa) still correctly reports that specific connector
   as not connected (tested in `test/gmailConnector.test.js`).
+
+### A third connector, same handful of lines: Google Drive
+
+`lib/connectors/googleDrive.js` is the proof the base generalizes past two
+connectors: `drive.metadata.readonly` scope (file names/links/timestamps
+only, never contents — least privilege), one action (`listRecentFiles`),
+done. `GET /connectors/google_drive/files` lists recently modified files.
+Not wired into an agent workflow step yet (no seeded agent has a
+Drive-shaped task) — the same one-line change used for Calendar/Gmail would
+do it whenever that's useful.
 
 ## Simplifications called out on purpose (read before treating this as final)
 
@@ -366,6 +390,8 @@ test/
    real agent workflow step" above.
 6. Move `JWT_SECRET`, `CONNECTOR_ENC_KEY` and friends to a real secrets
    manager before any non-local deployment.
-7. ~~More connectors following the same pattern~~ Done for Gmail — see "A
-   second connector proves the pattern" above. Drive, Slack, etc. would
-   follow the same shape.
+7. ~~More connectors following the same pattern~~ Done for Gmail and
+   Drive — three connectors now share `googleOAuthBase.js`. A
+   non-Google provider (Slack, Notion, ...) would need its own OAuth base
+   module with the same shape, since the token/refresh/revoke endpoints
+   differ per vendor.

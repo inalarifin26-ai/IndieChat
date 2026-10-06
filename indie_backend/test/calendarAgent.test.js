@@ -38,13 +38,13 @@ function withGoogleEnv(fn) {
   return async (...args) => {
     process.env.GOOGLE_CLIENT_ID = 'test-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-    process.env.GOOGLE_REDIRECT_URI = 'http://localhost/connectors/google_calendar/callback';
+    process.env.PUBLIC_BASE_URL = 'http://localhost';
     try {
       await fn(...args);
     } finally {
       delete process.env.GOOGLE_CLIENT_ID;
       delete process.env.GOOGLE_CLIENT_SECRET;
-      delete process.env.GOOGLE_REDIRECT_URI;
+      delete process.env.PUBLIC_BASE_URL;
     }
   };
 }

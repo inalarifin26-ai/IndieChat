@@ -40,13 +40,13 @@ function withGoogleEnv(fn) {
   return async (...args) => {
     process.env.GOOGLE_CLIENT_ID = 'test-client-id';
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
-    process.env.GOOGLE_REDIRECT_URI = 'http://localhost/connectors/gmail/callback';
+    process.env.PUBLIC_BASE_URL = 'http://localhost';
     try {
       await fn(...args);
     } finally {
       delete process.env.GOOGLE_CLIENT_ID;
       delete process.env.GOOGLE_CLIENT_SECRET;
-      delete process.env.GOOGLE_REDIRECT_URI;
+      delete process.env.PUBLIC_BASE_URL;
     }
   };
 }
@@ -80,11 +80,12 @@ test.after(async () => {
   for (const f of ['', '-wal', '-shm']) { try { fs.rmSync(process.env.DB_PATH + f); } catch {} }
 });
 
-test('GET /connectors lists both google_calendar and gmail independently', async () => {
+test('GET /connectors lists gmail and google_calendar independently (among whatever else is registered)', async () => {
   const user = await newUser();
   const list = (await api('GET', '/connectors', user.token)).body;
-  const providers = list.map((c) => c.provider).sort();
-  assert.deepStrictEqual(providers, ['gmail', 'google_calendar']);
+  const providers = list.map((c) => c.provider);
+  assert.ok(providers.includes('gmail'));
+  assert.ok(providers.includes('google_calendar'));
   assert.ok(list.every((c) => c.connected === false));
 });
 
