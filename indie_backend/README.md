@@ -302,6 +302,40 @@ Not wired into an agent workflow step yet (no seeded agent has a
 Drive-shaped task) — the same one-line change used for Calendar/Gmail would
 do it whenever that's useful.
 
+
+## Real condition evaluation for `logic` nodes
+
+Replaces the earlier "picks the alphabetically-first branch label" stand-in
+with a condition you actually configure per node, via
+`PATCH /workflows/:id/nodes/:nodeId { "condition": {...} }`:
+
+```jsonc
+{"type": "always", "branch": "Yes"}                     // deterministic
+{"type": "probability", "branch": "Yes", "percent": 70} // weighted random
+{"type": "random"}                                      // uniform random
+```
+
+- `always` / `probability` naming a `branch` that isn't actually wired on
+  the node's outgoing edges (or no condition set at all) falls back to the
+  alphabetically-first label — the old behavior, kept for backward
+  compatibility with workflows created before this existed, including the
+  earlier `execution.test.js` branch-skip tests, which still pass unchanged.
+- `probability`'s miss case picks uniformly among the *other* branches, not
+  just a fixed second choice — tested with >2 branches too.
+- This is a genuine runtime decision now (`lib/executionEngine.js`'s
+  `chooseBranch`, unit-tested directly, plus two end-to-end tests that run
+  a workflow and check which branch actually executed and shows up in the
+  timeline), not a hardcoded sort — but it's still a stand-in for
+  evaluating a real expression against upstream node output data, since
+  workflows here don't model data flow between nodes at all yet (a bigger
+  feature: nodes would need to produce/consume typed values, not just
+  state transitions). `random`/`probability` simulate the real-world
+  non-determinism a true data condition would have; swap in real expression
+  evaluation once nodes carry real output data.
+- Not yet exposed in the Flutter Workflow Builder's node config sheet
+  (title/subtitle only today) — the API is ready for it.
+
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
@@ -379,8 +413,10 @@ test/
 1. ~~Point the Flutter app at this backend~~ Done — see the Flutter
    package's README for the API client wiring.
 2. ~~Real `bip39` package~~ Done.
-3. ~~Topological Execution Engine~~ Done — real condition evaluation (not
-   just alphabetical-first) is the one piece still open, see above.
+3. ~~Topological Execution Engine~~ Done, ~~including real condition
+   evaluation~~ also done — see "Real condition evaluation" above. The one
+   piece still open there: evaluating an actual expression against
+   upstream node output data, since nodes don't produce/consume data today.
 4. ~~Wire one real AI Agent to an actual model call~~ Done — see "Real AI
    model replies" above (opt-in via `ANTHROPIC_API_KEY`). The Orchestrator's
    own instruction parsing is still pattern-based, not model-driven — a

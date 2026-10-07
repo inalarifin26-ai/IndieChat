@@ -215,7 +215,62 @@ function completeNode(executionId, node) {
   advance(executionId);
 }
 
-/** A `logic` node with >1 distinct branch_label picks one deterministically and skips the rest. */
+/**
+ * Picks which branch a `logic` node takes, given its configured
+ * `condition_json` (set via PATCH .../nodes/:nodeId, see routes/workflows.js)
+ * and the distinct branch_labels actually wired on its outgoing edges:
+ *
+ *   {"type":"always","branch":"Yes"}                  -> always that branch
+ *   {"type":"probability","branch":"Yes","percent":70} -> that branch
+ *                                                          `percent`% of the
+ *                                                          time (crypto-random),
+ *                                                          otherwise a
+ *                                                          uniform-random pick
+ *                                                          among the others
+ *   {"type":"random"}                                  -> uniform-random pick
+ *                                                          among all of them
+ *   no condition set (or it names a branch that isn't actually wired)
+ *                                                       -> alphabetically-first
+ *                                                          label, for
+ *                                                          backward
+ *                                                          compatibility with
+ *                                                          workflows created
+ *                                                          before this existed
+ *
+ * This is still a stand-in for evaluating a real expression against node
+ * output data (workflows here don't model data flow between nodes at all
+ * yet — see "Simplifications" in the README) but it is a genuine runtime
+ * decision now, not a hardcoded sort.
+ */
+function chooseBranch(distinctLabels, conditionJson) {
+  const sorted = [...distinctLabels].sort();
+  let condition = null;
+  try {
+    condition = conditionJson ? JSON.parse(conditionJson) : null;
+  } catch {
+    condition = null;
+  }
+  if (!condition || typeof condition !== 'object') return sorted[0];
+
+  if (condition.type === 'always' && distinctLabels.includes(condition.branch)) {
+    return condition.branch;
+  }
+
+  if (condition.type === 'probability' && distinctLabels.includes(condition.branch)) {
+    const percent = Math.min(100, Math.max(0, Number(condition.percent)));
+    if (Number.isFinite(percent) && crypto.randomInt(0, 100) < percent) return condition.branch;
+    const others = distinctLabels.filter((l) => l !== condition.branch);
+    return others[crypto.randomInt(0, others.length)];
+  }
+
+  if (condition.type === 'random') {
+    return distinctLabels[crypto.randomInt(0, distinctLabels.length)];
+  }
+
+  return sorted[0];
+}
+
+/** A `logic` node with >1 distinct branch_label picks one (chooseBranch) and skips the rest. */
 function applyBranchSkip(executionId, node) {
   const run = runs.get(executionId);
   const { graph } = run;
@@ -224,7 +279,7 @@ function applyBranchSkip(executionId, node) {
   const distinctLabels = [...new Set(labeled.map((e) => e.branch_label))];
   if (distinctLabels.length < 2) return; // nothing to branch on
 
-  const chosen = [...distinctLabels].sort()[0];
+  const chosen = chooseBranch(distinctLabels, node.condition_json);
   recordEvent(executionId, `${node.title} — condition took branch "${chosen}"`);
   for (const e of labeled) {
     if (e.branch_label === chosen) continue;
@@ -257,4 +312,4 @@ function resumeAfterApproval(userId, workflowId) {
   completeNode(execution.id, waitingNode);
 }
 
-module.exports = { startExecution, resumeAfterApproval, emitterFor, orderedNodes };
+module.exports = { startExecution, resumeAfterApproval, emitterFor, orderedNodes, chooseBranch };

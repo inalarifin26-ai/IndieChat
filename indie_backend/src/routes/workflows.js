@@ -18,6 +18,7 @@ function serializeNode(n) {
     state: n.state,
     disabled: !!n.disabled,
     permissionRequirements: JSON.parse(n.permission_requirements_json || '[]'),
+    condition: n.condition_json ? JSON.parse(n.condition_json) : null,
   };
 }
 
@@ -129,16 +130,49 @@ router.patch('/:id/nodes/:nodeId', (req, res) => {
   if (!wf) return;
   const node = db.prepare('SELECT * FROM workflow_nodes WHERE id = ? AND workflow_id = ?').get(req.params.nodeId, wf.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
-  const { title, subtitle, position, disabled } = req.body || {};
+  const { title, subtitle, position, disabled, condition } = req.body || {};
+
+  let conditionJson; // undefined = leave unchanged; null = explicit clear; string = new value
+  if (condition !== undefined) {
+    if (condition === null) {
+      conditionJson = null;
+    } else {
+      const validTypes = ['always', 'probability', 'random'];
+      if (typeof condition !== 'object' || !validTypes.includes(condition.type)) {
+        return res.status(400).json({ error: 'condition.type must be one of: always, probability, random' });
+      }
+      if (condition.type !== 'random' && typeof condition.branch !== 'string') {
+        return res.status(400).json({ error: 'condition.branch (a branch_label string) is required for "always" and "probability"' });
+      }
+      if (condition.type === 'probability') {
+        const p = Number(condition.percent);
+        if (!Number.isFinite(p) || p < 0 || p > 100) {
+          return res.status(400).json({ error: 'condition.percent must be a number from 0 to 100' });
+        }
+      }
+      conditionJson = JSON.stringify(condition);
+    }
+  }
+
   db.prepare(
     `UPDATE workflow_nodes SET
        title = COALESCE(?, title),
        subtitle = COALESCE(?, subtitle),
        pos_x = COALESCE(?, pos_x),
        pos_y = COALESCE(?, pos_y),
-       disabled = COALESCE(?, disabled)
+       disabled = COALESCE(?, disabled),
+       condition_json = CASE WHEN ? THEN ? ELSE condition_json END
      WHERE id = ?`
-  ).run(title ?? null, subtitle ?? null, position?.x ?? null, position?.y ?? null, disabled === undefined ? null : disabled ? 1 : 0, node.id);
+  ).run(
+    title ?? null,
+    subtitle ?? null,
+    position?.x ?? null,
+    position?.y ?? null,
+    disabled === undefined ? null : disabled ? 1 : 0,
+    condition !== undefined ? 1 : 0,
+    conditionJson ?? null,
+    node.id
+  );
   touchWorkflow(wf.id);
   res.json(serializeNode(db.prepare('SELECT * FROM workflow_nodes WHERE id = ?').get(node.id)));
 });

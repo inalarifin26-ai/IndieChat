@@ -43,6 +43,10 @@ ensureColumns('contacts', [
   ['unread', 'INTEGER DEFAULT 0'],
 ]);
 
+ensureColumns('workflow_nodes', [
+  ['condition_json', 'TEXT'], // logic-node branch condition — see lib/executionEngine.js chooseBranch()
+]);
+
 // connectors / oauth_states are new tables (added by schema.sql on every
 // boot via CREATE TABLE IF NOT EXISTS), so no ALTER TABLE migration is
 // needed for them specifically — listed here only as a reminder for future

@@ -109,7 +109,8 @@ CREATE TABLE IF NOT EXISTS workflow_nodes (
   pos_y                 REAL DEFAULT 0,
   state                 TEXT DEFAULT 'idle',
   disabled              INTEGER DEFAULT 0,
-  permission_requirements_json TEXT DEFAULT '[]'
+  permission_requirements_json TEXT DEFAULT '[]',
+  condition_json        TEXT -- logic-node branch condition; see lib/executionEngine.js chooseBranch()
 );
 
 CREATE TABLE IF NOT EXISTS workflow_connections (
