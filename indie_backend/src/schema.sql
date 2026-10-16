@@ -237,3 +237,22 @@ CREATE TABLE IF NOT EXISTS oauth_states (
   provider              TEXT NOT NULL,
   created_at            TEXT NOT NULL
 );
+
+-- Group chats are rows in `contacts` with kind='group'; this table lists the
+-- person-contacts that belong to them. Members are the user's OWN contacts —
+-- there is no second real account on the other end (single-user MVP).
+CREATE TABLE IF NOT EXISTS group_members (
+  group_id              TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  contact_id            TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  added_at              TEXT NOT NULL,
+  PRIMARY KEY (group_id, contact_id)
+);
+
+-- Free-form personal notes kept in the Personal Vault (Vault > Notes).
+CREATE TABLE IF NOT EXISTS vault_notes (
+  id                    TEXT PRIMARY KEY,
+  user_id               TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title                 TEXT NOT NULL,
+  body                  TEXT DEFAULT '',
+  created_at            TEXT NOT NULL
+);

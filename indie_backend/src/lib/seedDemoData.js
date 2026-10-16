@@ -13,13 +13,13 @@ function minsAgo(m) {
 function cMsg(userId, contactId, sender, text, minutes, extra = {}) {
   const id = extra.id || uuid();
   db.prepare(
-    `INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at, kind, payload_json, status, reply_to_id, reactions_json, my_reaction)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO contact_messages (id, user_id, contact_id, sender, text, created_at, kind, payload_json, status, reply_to_id, reactions_json, my_reaction, sender_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id, userId, contactId, sender, text, minsAgo(minutes), extra.kind || 'text',
     extra.payload ? JSON.stringify(extra.payload) : null,
     sender === 'user' ? extra.status || 'read' : null,
-    extra.replyTo || null, JSON.stringify(extra.reactions || {}), extra.myReaction || null
+    extra.replyTo || null, JSON.stringify(extra.reactions || {}), extra.myReaction || null, extra.from || null
   );
   return id;
 }
@@ -62,11 +62,23 @@ function seedDemoData(userId) {
   ).run(sarahId, userId, now);
   cMsg(userId, sarahId, 'contact', 'Send me the vault link when ready', 190);
 
-  const familyId = uuid();
-  db.prepare(
-    "INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at, info, grp) VALUES (?, ?, 'Family', 'FM', '4 members', 0, ?, 'Group · 4 members', 'Family')"
-  ).run(familyId, userId, now);
-  cMsg(userId, familyId, 'contact', 'Dinner at 7?', 360);
+  // Groups are contacts with kind='group' + members drawn from the user's own contacts
+  const group = (name, desc, memberIds) => {
+    const gid = uuid();
+    db.prepare(
+      "INSERT INTO contacts (id, user_id, name, initials, status, pinned, created_at, info, grp, kind, description, visibility, allow_new) VALUES (?, ?, ?, ?, 'Group', 0, ?, '', '', 'group', ?, 'private', 1)"
+    ).run(gid, userId, name, name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), now, desc);
+    memberIds.forEach((m) => db.prepare('INSERT INTO group_members (group_id, contact_id, added_at) VALUES (?, ?, ?)').run(gid, m, now));
+    return gid;
+  };
+  const teamId = group('Team Marketing', 'Campaign planning and weekly syncs.', [alexId, sarahId]);
+  cMsg(userId, teamId, 'contact', '', 300, { kind: 'file', payload: { file: { name: 'Campaign Report.pdf', size: '2.4 MB' } }, from: 'Alex Rahman' });
+  cMsg(userId, teamId, 'contact', "Here's the latest campaign update.", 299, { from: 'Alex Rahman' });
+  cMsg(userId, teamId, 'user', "Great! Let's review it in the next meeting.", 290);
+  cMsg(userId, teamId, 'contact', "I'll also share the creative brief shortly.", 120, { from: 'Sarah Putri', reactions: { '👍': 1 } });
+
+  const familyId = group('Family', 'Family chat', [sarahId]);
+  cMsg(userId, familyId, 'contact', 'Dinner at 7?', 360, { from: 'Sarah Putri' });
 
   // Agents
   const marketingId = uuid();

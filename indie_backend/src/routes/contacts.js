@@ -10,13 +10,23 @@ router.use(requireAuth);
 
 const T = 'contact_messages';
 
+function groupMembers(groupId) {
+  return db
+    .prepare(`SELECT c.id, c.name, c.initials FROM group_members gm JOIN contacts c ON c.id = gm.contact_id WHERE gm.group_id = ? ORDER BY gm.added_at ASC, c.name ASC`)
+    .all(groupId);
+}
+
 function serializeContact(row) {
   const last = db.prepare(`SELECT * FROM ${T} WHERE contact_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1`).get(row.id);
+  const isGroup = row.kind === 'group';
+  const members = isGroup ? groupMembers(row.id) : null;
   return {
     id: row.id,
+    kind: row.kind || 'person',
     name: row.name,
     initials: row.initials,
-    status: row.status,
+    status: isGroup ? `${members.length + 1} members` : row.status, // +1 = you
+    ...(isGroup ? { description: row.description || '', visibility: row.visibility || 'private', allowNewMembers: row.allow_new !== 0, memberCount: members.length + 1, members } : {}),
     info: row.info || '',
     group: row.grp || '',
     pinned: !!row.pinned,
@@ -65,9 +75,18 @@ router.post('/', (req, res) => {
 router.patch('/:id', (req, res) => {
   const c = ownedContact(req, res);
   if (!c) return;
-  const { name, info, group, muted, pinned } = req.body || {};
+  const { name, info, group, muted, pinned, description, visibility, allowNewMembers } = req.body || {};
   if (name !== undefined && !String(name).trim()) return res.status(400).json({ error: 'Name cannot be empty' });
   if (info !== undefined && !String(info).trim()) return res.status(400).json({ error: 'Contact info cannot be empty' });
+  if (visibility !== undefined && !['public', 'private'].includes(visibility)) return res.status(400).json({ error: 'visibility must be public or private' });
+  if (c.kind === 'group') {
+    db.prepare('UPDATE contacts SET description = ?, visibility = ?, allow_new = ? WHERE id = ?').run(
+      description !== undefined ? String(description).trim() : c.description,
+      visibility !== undefined ? visibility : c.visibility,
+      allowNewMembers !== undefined ? (allowNewMembers ? 1 : 0) : c.allow_new,
+      c.id
+    );
+  }
   db.prepare(
     `UPDATE contacts SET name = ?, initials = ?, info = ?, grp = ?, muted = ?, pinned = ? WHERE id = ?`
   ).run(
@@ -136,6 +155,24 @@ router.post('/:id/messages', (req, res) => {
   bump('delivered', 500);
   bump('read', 2000);
 
+  // Group chats: a random member answers (simulated — members are your own
+  // contacts, there is no second real account on the other end).
+  if (c.kind === 'group') {
+    const members = groupMembers(c.id);
+    if (members.length) {
+      const who = members[Math.floor(Math.random() * members.length)];
+      const replies = ['Noted 👍', 'Thanks!', 'Okay, got it', 'Will check 🙌', 'Sounds good'];
+      setTimeout(() => {
+        try {
+          if (!db.prepare('SELECT 1 FROM contacts WHERE id = ?').get(c.id)) return; // group was deleted meanwhile
+          db.prepare(
+            `INSERT INTO ${T} (id, user_id, contact_id, sender, sender_name, text, created_at, kind, status) VALUES (?, ?, ?, 'contact', ?, ?, ?, 'text', NULL)`
+          ).run(crypto.randomUUID(), req.userId, c.id, who.name, replies[Math.floor(Math.random() * replies.length)], new Date().toISOString());
+        } catch {}
+      }, 2300).unref();
+    }
+  }
+
   res.status(201).json(serializeMessage(T, db.prepare(`SELECT * FROM ${T} WHERE id = ?`).get(id)));
 });
 
@@ -188,3 +225,5 @@ router.delete('/:id/messages', (req, res) => {
 });
 
 module.exports = router;
+module.exports.serializeContact = serializeContact;
+module.exports.groupMembers = groupMembers;

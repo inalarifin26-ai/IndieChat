@@ -312,4 +312,26 @@ function resumeAfterApproval(userId, workflowId) {
   completeNode(execution.id, waitingNode);
 }
 
-module.exports = { startExecution, resumeAfterApproval, emitterFor, orderedNodes, chooseBranch };
+/**
+ * Stops a running or approval-paused execution. Nodes that have not finished
+ * become `cancelled` (finished ones keep their state), any open approval
+ * request for the workflow is closed as not-approved, and the in-memory run
+ * is dropped so pending node timers become no-ops.
+ */
+function cancelExecution(userId, executionId) {
+  const ex = db.prepare('SELECT * FROM executions WHERE id = ? AND user_id = ?').get(executionId, userId);
+  if (!ex) return { status: 404, error: 'Not found' };
+  if (!['running', 'waitingApproval'].includes(ex.state)) return { status: 409, error: 'Execution is not running' };
+  const open = db.prepare("SELECT id FROM workflow_nodes WHERE workflow_id = ? AND state IN ('idle', 'running', 'waiting', 'queued')").all(ex.workflow_id);
+  db.prepare("UPDATE workflow_nodes SET state = 'cancelled' WHERE workflow_id = ? AND state IN ('idle', 'running', 'waiting', 'queued')").run(ex.workflow_id);
+  db.prepare('UPDATE approval_requests SET resolved = 1, approved = 0 WHERE workflow_id = ? AND resolved = 0').run(ex.workflow_id);
+  db.prepare("UPDATE executions SET state = 'cancelled', completed_at = ? WHERE id = ?").run(new Date().toISOString(), executionId);
+  runs.delete(executionId);
+  open.forEach((n) => emit(executionId, { type: 'node', nodeId: n.id, state: 'cancelled' }));
+  recordEvent(executionId, 'Execution cancelled by you');
+  emit(executionId, { type: 'state', state: 'cancelled' });
+  logAudit(userId, 'workflow_execution_cancelled', `execution=${executionId}`);
+  return { ok: true };
+}
+
+module.exports = { cancelExecution, startExecution, resumeAfterApproval, emitterFor, orderedNodes, chooseBranch };

@@ -13,6 +13,7 @@ const LIB = {
   finance: { existing: 'Finance Agent', result: 'Estimated total budget: Rp 32,600,000 for a family of 4, incl. buffer.' },
   research: { existing: 'Research Agent', result: 'Found 5 relevant options and sources worth reviewing.' },
   marketing: { existing: 'Marketing Agent', result: 'Drafted a performance summary — publishing still needs your approval.' },
+  assistant: { existing: 'Personal Assistant', result: 'Prepared your day from your calendar and inbox.' },
 };
 
 function uuid() {
@@ -146,6 +147,7 @@ function pickPlan(text) {
   const l = text.toLowerCase();
   if (/trip|bali|travel|liburan|flight|hotel/.test(l)) return ['travel', 'itinerary', 'finance', 'research'];
   if (/campaign|marketing|instagram|ads|iklan/.test(l)) return ['research', 'marketing'];
+  if (/\bday\b|schedule|agenda|hari|calendar/.test(l)) return ['assistant'];
   return ['research', 'finance'];
 }
 

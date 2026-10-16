@@ -24,6 +24,7 @@ function serializeMessage(table, row) {
   return {
     id: row.id,
     sender: row.sender,
+    from: row.sender_name || null, // which member said it (group chats)
     kind: row.kind || 'text',
     text: row.deleted ? '' : row.text,
     payload: row.deleted || !row.payload_json ? null : JSON.parse(row.payload_json),

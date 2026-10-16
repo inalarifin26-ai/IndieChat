@@ -3,7 +3,7 @@ const crypto = require('node:crypto');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { logAudit } = require('../lib/audit');
-const { serializeMessage, setReaction, buildAttachment } = require('../lib/messages');
+const { serializeMessage, setReaction, buildAttachment, snippet } = require('../lib/messages');
 const { evaluate, resultCard } = require('../lib/agentScope');
 const aiModel = require('../lib/aiModel');
 const gcal = require('../lib/connectors/googleCalendar');
@@ -21,10 +21,12 @@ function stepsOf(agentId) {
 function serializeAgent(row) {
   const permissions = db.prepare('SELECT label FROM agent_permissions WHERE agent_id = ?').all(row.id).map((p) => p.label);
   const pendingApproval = db.prepare('SELECT 1 FROM approval_requests WHERE agent_id = ? AND resolved = 0 LIMIT 1').get(row.id);
+  const last = db.prepare('SELECT * FROM agent_messages WHERE agent_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1').get(row.id);
   return {
     id: row.id,
     name: row.name,
     role: row.role,
+    lastMessage: last ? { sender: last.sender, kind: last.kind || 'text', text: snippet(last), deleted: !!last.deleted, createdAt: last.created_at } : null,
     glyph: row.glyph,
     accentHex: row.accent_hex,
     state: row.state,

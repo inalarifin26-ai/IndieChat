@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { hashSecret, verifySecret } = require('../lib/secret');
 const { generateRecoveryPhrase, normalizePhrase, isValidPhrase } = require('../lib/mnemonic');
-const { generatePersonalId } = require('../lib/personalId');
+const { generatePersonalId, validateChosenId, suggestIds } = require('../lib/personalId');
 const { JWT_SECRET, requireAuth } = require('../middleware/auth');
 const { logAudit } = require('../lib/audit');
 const { seedDemoData } = require('../lib/seedDemoData');
@@ -39,11 +39,23 @@ router.post('/register', (req, res) => {
     return res.status(400).json({ error: 'credential must be at least 6 characters' });
   }
 
-  let personalId = generatePersonalId();
-  let attempts = 0;
-  while (db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(personalId) && attempts < 5) {
+  // The person may choose their own Indie ID ("Create Your ID" screen);
+  // without one we generate a word.word99 ID as before.
+  let personalId;
+  if (req.body.personalId !== undefined && req.body.personalId !== null && String(req.body.personalId).trim() !== '') {
+    const v = validateChosenId(req.body.personalId);
+    if (!v.ok) return res.status(400).json({ error: v.reason, field: 'personalId' });
+    if (db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(v.id)) {
+      return res.status(409).json({ error: 'This ID is already taken', field: 'personalId' });
+    }
+    personalId = v.id;
+  } else {
     personalId = generatePersonalId();
-    attempts++;
+    let attempts = 0;
+    while (db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(personalId) && attempts < 5) {
+      personalId = generatePersonalId();
+      attempts++;
+    }
   }
 
   const recoveryPhrase = generateRecoveryPhrase(12);
@@ -129,9 +141,30 @@ router.post('/logout', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+const meShape = (u) => ({ id: u.id, personalId: u.personal_id, displayName: u.display_name || u.personal_id, createdAt: u.created_at });
+
 router.get('/me', requireAuth, (req, res) => {
-  const user = db.prepare('SELECT id, personal_id, created_at FROM users WHERE id = ?').get(req.userId);
-  res.json({ id: user.id, personalId: user.personal_id, createdAt: user.created_at });
+  res.json(meShape(db.prepare('SELECT id, personal_id, display_name, created_at FROM users WHERE id = ?').get(req.userId)));
+});
+
+router.patch('/me', requireAuth, (req, res) => {
+  const name = String((req.body || {}).displayName ?? '').trim();
+  if (!name || name.length > 40) return res.status(400).json({ error: 'displayName must be 1-40 characters' });
+  db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(name, req.userId);
+  logAudit(req.userId, 'profile_updated', 'display_name');
+  res.json(meShape(db.prepare('SELECT id, personal_id, display_name, created_at FROM users WHERE id = ?').get(req.userId)));
+});
+
+// Public (pre-account) helpers for the "Create Your ID" screen.
+router.get('/id-available', (req, res) => {
+  const v = validateChosenId(req.query.id);
+  if (!v.ok) return res.json({ id: v.id, valid: false, available: false, reason: v.reason });
+  const taken = !!db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(v.id);
+  res.json({ id: v.id, valid: true, available: !taken, reason: taken ? 'This ID is already taken' : null });
+});
+
+router.get('/id-suggestions', (req, res) => {
+  res.json({ suggestions: suggestIds(3, (id) => !!db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(id)) });
 });
 
 module.exports = router;

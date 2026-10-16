@@ -336,6 +336,32 @@ with a condition you actually configure per node, via
   (title/subtitle only today) — the API is ready for it.
 
 
+
+## Endpoints added for the redesigned UI
+
+| Area | Endpoints |
+|---|---|
+| Create Your ID | `GET /auth/id-available?id=` · `GET /auth/id-suggestions` · `POST /auth/register { personalId? }` (409 if taken) |
+| Profile | `GET /auth/me` / `PATCH /auth/me { displayName }` |
+| Groups | `POST /groups` · `GET/POST /groups/:id/members` · `DELETE /groups/:id/members/:contactId` · edit with `PATCH /contacts/:id` · leave/delete with `DELETE /contacts/:id` |
+| Search | `GET /search?q=&scope=messages\|contacts\|groups\|agents` |
+| Vault | `GET/POST /vault/notes` · `DELETE /vault/notes/:id` · `GET /vault/memories` · share accepts `format` (`pdf`/`link`/`message`/`file`) |
+| Flow | `POST /workflows/executions/:id/cancel` |
+
+Notes:
+- A **group** is a row in `contacts` with `kind: "group"`; members are the
+  caller's *own person-contacts* (never agents, never another account's
+  contacts — enforced and tested). Group messages carry `from` (the member
+  name). Replies from members are **simulated**, like the delivery receipts:
+  there is no second real account on the other end in this MVP.
+- `GET /contacts` returns people and groups together (`kind` tells them
+  apart); `GET /agents` now includes `lastMessage`, so a client can build the
+  unified Messages list while still labeling every row as person, group or
+  agent.
+- Search matches the human-readable snippet of a message (so "report" finds
+  `Weekly Report.pdf`) and never raw JSON internals; deleted messages are
+  never returned.
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the

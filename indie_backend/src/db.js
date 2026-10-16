@@ -43,6 +43,15 @@ ensureColumns('contacts', [
   ['unread', 'INTEGER DEFAULT 0'],
 ]);
 
+ensureColumns('users', [['display_name', "TEXT DEFAULT ''"]]);
+ensureColumns('contacts', [
+  ['kind', "TEXT DEFAULT 'person'"], // 'person' | 'group'
+  ['description', "TEXT DEFAULT ''"],
+  ['visibility', "TEXT DEFAULT 'private'"], // groups: 'public' | 'private'
+  ['allow_new', 'INTEGER DEFAULT 1'],
+]);
+ensureColumns('contact_messages', [['sender_name', 'TEXT']]); // which member said it (group chats)
+
 ensureColumns('workflow_nodes', [
   ['condition_json', 'TEXT'], // logic-node branch condition — see lib/executionEngine.js chooseBranch()
 ]);

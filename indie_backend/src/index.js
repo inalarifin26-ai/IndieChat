@@ -11,6 +11,8 @@ const vaultRoutes = require('./routes/vault');
 const auditRoutes = require('./routes/audit');
 const orchestratorRoutes = require('./routes/orchestrator');
 const connectorsRoutes = require('./routes/connectors');
+const groupsRoutes = require('./routes/groups');
+const searchRoutes = require('./routes/search');
 
 const app = express();
 app.use(cors());
@@ -27,6 +29,8 @@ app.use('/vault', vaultRoutes);
 app.use('/audit', auditRoutes);
 app.use('/orchestrator', orchestratorRoutes);
 app.use('/connectors', connectorsRoutes);
+app.use('/groups', groupsRoutes);
+app.use('/search', searchRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

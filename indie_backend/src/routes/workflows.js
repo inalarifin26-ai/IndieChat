@@ -276,6 +276,12 @@ router.get('/:id/executions', (req, res) => {
   res.json(rows.map((e) => ({ id: e.id, state: e.state, startedAt: e.started_at, completedAt: e.completed_at })));
 });
 
+router.post('/executions/:executionId/cancel', (req, res) => {
+  const r = require('../lib/executionEngine').cancelExecution(req.userId, req.params.executionId);
+  if (r.error) return res.status(r.status).json({ error: r.error });
+  res.json({ ok: true });
+});
+
 router.get('/executions/:executionId/timeline', (req, res) => {
   const execution = db.prepare('SELECT * FROM executions WHERE id = ? AND user_id = ?').get(req.params.executionId, req.userId);
   if (!execution) return res.status(404).json({ error: 'Not found' });
