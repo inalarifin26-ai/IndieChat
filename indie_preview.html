@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indie — Preview</title><style>:root{
+  color-scheme:light;
+  --bg:#F5F7FC;--card:#fff;--soft:#EFF2FA;--soft2:#E6EBFA;--stroke:#E4E8F2;
+  --text:#121832;--text2:#586080;--faint:#9AA2BC;
+  --indigo:#4B5CF0;--blue:#2F7BF5;--cyan:#1CC8F0;--violet:#6C4CF0;
+  --grad:linear-gradient(90deg,#5B47F0 0%,#2F86F5 58%,#1CC8F0 100%);
+  --grad-msg:linear-gradient(135deg,#5B47F0 0%,#3A7CF5 100%);
+  --green:#16A34A;--amber:#F59E0B;--red:#E5484D;--purple:#7C5CFF;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;margin:0;background:#E9EDF7;color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,"Helvetica Neue",Arial,sans-serif;}
+button{font:inherit;color:inherit;}
+svg{display:block;flex:0 0 auto;}
+#app{position:relative;max-width:430px;height:100vh;height:100dvh;margin:0 auto;background:var(--bg);overflow:hidden;box-shadow:0 0 0 1px var(--stroke);}
+.root{position:absolute;inset:0;bottom:64px;display:none;flex-direction:column;background:var(--bg);}
+.root.active{display:flex;}
+.page{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:20;transform:translateX(100%);visibility:hidden;transition:transform .24s ease,visibility 0s .24s;}
+.page.open{transform:none;visibility:visible;transition:transform .24s ease;}
+.page.withnav{bottom:64px;}
+.page.fade{transform:none;opacity:0;transition:opacity .25s,visibility 0s .25s;}
+.page.fade.open{opacity:1;transition:opacity .25s;}
+.head{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:calc(14px + var(--safe-top)) 18px 10px;}
+.head h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.4px;flex:1;}
+.head.sub{padding-bottom:6px;}
+.head.sub h1{font-size:18px;text-align:left;}
+.head .t2{font-size:12px;color:var(--text2);margin-top:2px;font-weight:500;}
+.ibtn{width:38px;height:38px;border-radius:12px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;}
+.ibtn:active{background:var(--soft);}
+.body{flex:1;overflow-y:auto;padding:4px 18px 20px;}
+.body.flush{padding-left:0;padding-right:0;}
+.body::-webkit-scrollbar,.chips::-webkit-scrollbar,.achips::-webkit-scrollbar{display:none;}
+.search{display:flex;align-items:center;gap:9px;margin:2px 18px 12px;padding:0 14px;height:44px;border-radius:14px;background:var(--soft);color:var(--faint);font-size:14px;}
+.search input{flex:1;border:none;background:transparent;outline:none;font:inherit;color:var(--text);min-width:0;}
+.search input::placeholder{color:var(--faint);}
+.chips{display:flex;gap:8px;padding:0 18px 12px;overflow-x:auto;}
+.chip{border:none;background:var(--soft);color:var(--text2);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.chip.on{background:var(--blue);color:#fff;}
+.seg{display:flex;margin:0 18px 14px;padding:4px;background:var(--soft);border-radius:14px;gap:4px;}
+.seg button{flex:1;border:none;background:transparent;padding:9px 6px;border-radius:11px;font-size:13px;font-weight:700;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+.seg button.on{background:#fff;color:var(--indigo);box-shadow:0 1px 4px rgba(40,60,140,.12);}
+.lbl{font-size:13px;font-weight:800;margin:14px 0 8px;color:var(--text);}
+.lbl.faint{color:var(--text2);font-weight:700;}
+.row{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;position:relative;}
+.row:active{background:#EEF1FB;}
+.row .grow{flex:1;min-width:0;}
+.row .nm{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.row .nm span.tm{margin-left:auto;font-weight:500;font-size:12px;color:var(--faint);}
+.row .sb{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.row .st{font-size:11.5px;color:var(--green);margin-top:3px;font-weight:600;display:flex;align-items:center;gap:5px;}
+.row .st i{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.row .st.idle{color:var(--faint);}.row .st.idle i{background:var(--faint);}
+.row .st.warn{color:var(--amber);}.row .st.warn i{background:var(--amber);}
+.row .st.appr{color:var(--purple);}.row .st.appr i{background:var(--purple);}
+.row .chev{color:var(--faint);}
+.ub{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;}
+.cardlist{background:var(--card);border:1px solid var(--stroke);border-radius:16px;overflow:hidden;}
+.cardlist .row{padding:12px 14px;}
+.cardlist .row + .row::before{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:var(--stroke);}
+.av{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;position:relative;flex:0 0 auto;}
+.av .pres{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;background:var(--green);border:2px solid #fff;}
+.av.sm{width:34px;height:34px;font-size:12px;}.av.lg{width:72px;height:72px;font-size:24px;}.av.xs{width:30px;height:30px;font-size:11px;}
+.ag{color:#fff;}
+.btn{border:1px solid var(--stroke);background:#fff;color:var(--text);padding:13px 18px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;}
+.btn.primary{background:var(--grad);border:none;color:#fff;box-shadow:0 6px 16px rgba(60,100,240,.28);}
+.btn.block{width:100%;display:block;}
+.btn.sm{padding:9px 14px;font-size:13px;border-radius:12px;}
+.btn.danger{color:var(--red);border-color:#F6CFD1;background:#FFF6F6;}
+.btn:disabled{opacity:.5;}
+.btn.ghost{background:var(--soft);border:none;color:var(--indigo);}
+.btnrow{display:flex;gap:10px;}.btnrow .btn{flex:1;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.field .in{display:flex;align-items:center;background:#fff;border:1px solid var(--stroke);border-radius:13px;padding:0 14px;height:48px;}
+.field .in:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,123,245,.12);}
+.field input,.field select,.field textarea{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:15px;color:var(--text);min-width:0;}
+.field textarea{padding:12px 0;resize:none;height:70px;}
+.field .in.ta{height:auto;}
+.field .suffix{color:var(--faint);font-size:14px;margin-left:6px;}
+.field .err{display:none;color:var(--red);font-size:12px;margin-top:5px;}
+.field.bad .in{border-color:var(--red);}.field.bad .err{display:block;}
+.field .ok{display:none;color:var(--green);font-size:12px;margin-top:5px;}
+.field.good .ok{display:block;}
+.sw{width:44px;height:26px;border-radius:13px;background:#CBD2E6;position:relative;flex:0 0 auto;transition:.2s;cursor:pointer;}
+.sw::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s;}
+.sw.on{background:var(--blue);}.sw.on::after{transform:translateX(18px);}
+.cb{width:22px;height:22px;border-radius:7px;border:1.8px solid #C4CCE2;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;background:#fff;cursor:pointer;}
+.cb.on{background:var(--blue);border-color:var(--blue);}
+.cb svg{opacity:0;}.cb.on svg{opacity:1;}
+.rd{width:22px;height:22px;border-radius:50%;border:1.8px solid #C4CCE2;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#fff;}
+.rd.on{border-color:var(--blue);}.rd.on::after{content:'';width:11px;height:11px;border-radius:50%;background:var(--blue);}
+.fab{position:absolute;right:18px;bottom:18px;width:54px;height:54px;border-radius:50%;background:var(--grad);border:none;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(60,100,240,.4);cursor:pointer;z-index:5;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+.pill.green{background:#E3F6EA;color:var(--green);}.pill.gray{background:var(--soft);color:var(--text2);}.pill.purple{background:#EFEAFF;color:var(--purple);}
+.pill.amber{background:#FFF1D6;color:#B7791F;}.pill.red{background:#FDE7E8;color:var(--red);}
+.hint{font-size:12.5px;color:var(--text2);line-height:1.5;margin:0 0 12px;}
+.center{text-align:center;}
+.cen{display:flex;justify-content:center;}
+#tabbar{position:absolute;left:0;right:0;bottom:0;height:64px;padding-bottom:var(--safe-bot);background:#fff;border-top:1px solid var(--stroke);display:flex;z-index:30;}
+#tabbar.hide{display:none;}
+#tabbar button{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--faint);font-size:10.5px;font-weight:600;cursor:pointer;position:relative;}
+#tabbar button.on{color:var(--indigo);}
+#tabbar .bd{position:absolute;top:7px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.chat{flex:1;overflow-y:auto;padding:8px 16px 14px;display:flex;flex-direction:column;}
+.chat::-webkit-scrollbar{display:none;}
+.dsep{text-align:center;margin:10px 0 8px;}.dsep span{background:var(--soft);color:var(--text2);font-size:11px;font-weight:600;padding:3px 11px;border-radius:10px;}
+.msg{display:flex;flex-direction:column;width:fit-content;max-width:80%;margin:0 0 10px;}
+.msg.me{margin-left:auto;align-items:flex-end;}.msg.them{align-items:flex-start;}
+.msg .who{font-size:11.5px;color:var(--text2);margin:0 4px 3px;font-weight:600;}.msg .who b{color:var(--text);}
+.bub{padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.4;word-break:break-word;cursor:pointer;max-width:100%;}
+.msg.them .bub{background:#fff;border:1px solid var(--stroke);border-bottom-left-radius:6px;}
+.msg.me .bub{background:var(--grad-msg);color:#fff;border-bottom-right-radius:6px;}
+.mt{font-size:10.5px;color:var(--faint);margin:3px 4px 0;display:flex;gap:4px;align-items:center;}
+.tk{color:var(--faint);display:inline-flex;}.tk.read{color:var(--blue);}
+.quote{border-left:3px solid var(--cyan);background:rgba(120,140,200,.14);border-radius:8px;padding:5px 9px;margin-bottom:6px;font-size:12px;cursor:pointer;}
+.msg.me .quote{background:rgba(0,0,0,.16);border-color:#fff;}
+.quote b{display:block;font-size:11px;color:var(--indigo);margin-bottom:1px;}.msg.me .quote b{color:#fff;}
+.rx{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.rx span{background:#fff;border:1px solid var(--stroke);border-radius:12px;padding:1px 8px;font-size:12px;cursor:pointer;}.rx span.mine{border-color:var(--blue);background:#EAF1FF;}
+.sysmsg{align-self:center;background:var(--soft);color:var(--text2);font-size:11.5px;padding:5px 12px;border-radius:12px;margin:6px 0 12px;text-align:center;max-width:80%;}
+.filec{display:flex;gap:11px;align-items:center;background:#fff;border:1px solid var(--stroke);border-radius:14px;padding:10px 12px;min-width:210px;cursor:pointer;}
+.fic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;}
+.filec b{font-size:13px;display:block;}.filec small{color:var(--faint);font-size:11.5px;}
+.rcard{background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:13px;min-width:248px;max-width:100%;cursor:pointer;}
+.rcard h5{margin:0 0 9px;font-size:13.5px;}
+.mets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.met{background:var(--bg);border-radius:11px;padding:9px 10px;}.met small{display:block;color:var(--text2);font-size:11px;}
+.met b{font-size:17px;}.met i{font-style:normal;color:var(--green);font-size:11px;font-weight:700;display:block;margin-top:1px;}
+.rcard .ins{font-size:12.5px;font-weight:800;margin:4px 0 5px;}
+.rcard ul{margin:0 0 8px;padding-left:17px;color:var(--text2);font-size:12.5px;line-height:1.6;}
+.rcard .acts{display:flex;gap:8px;margin-top:6px;}.rcard .acts .btn{padding:8px 10px;font-size:12px;border-radius:10px;flex:1;}
+.typing{display:flex;gap:4px;padding:12px 15px;background:#fff;border:1px solid var(--stroke);border-radius:18px;border-bottom-left-radius:6px;width:fit-content;margin-bottom:10px;}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:bl 1s infinite;}.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.flash{animation:fl 1.2s;}@keyframes fl{0%,100%{background:transparent}30%{background:rgba(47,123,245,.18)}}
+.replybar{display:none;align-items:center;gap:8px;padding:8px 16px;background:#fff;border-top:1px solid var(--stroke);font-size:12px;}
+.replybar.show{display:flex;}.replybar .q{flex:1;border-left:3px solid var(--cyan);padding-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);}
+.replybar .q b{display:block;color:var(--indigo);font-size:11px;}
+.composer{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px + var(--safe-bot));background:#fff;border-top:1px solid var(--stroke);}
+.composer .plus{width:38px;height:38px;border-radius:50%;border:none;background:var(--soft);color:var(--indigo);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
+.composer .fld{flex:1;display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:22px;padding:0 12px 0 16px;height:42px;min-width:0;}
+.composer input{flex:1;border:none;outline:none;background:transparent;font:inherit;font-size:14.5px;color:var(--text);min-width:0;}
+.composer .fld svg{color:var(--faint);}
+.composer .snd{width:40px;height:40px;border-radius:50%;border:none;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;box-shadow:0 4px 12px rgba(60,100,240,.3);}
+.scope{margin:0 0 10px;background:#EDF3FF;border:1px solid #D5E3FF;border-radius:14px;padding:10px 13px;font-size:12px;color:var(--text2);}
+.scope .top{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--indigo);cursor:pointer;}
+.scope ul{margin:8px 0 2px;padding-left:18px;line-height:1.65;display:none;}.scope.open ul{display:block;}
+.scope .lk{color:var(--indigo);font-weight:700;cursor:pointer;display:none;margin-top:4px;}.scope.open .lk{display:inline-block;}
+.apprc{background:#fff;border:1px solid #D9CCFF;border-radius:16px;padding:13px;margin:4px 0 12px;}
+.apprc .tg{color:var(--purple);font-weight:800;font-size:12px;display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.backdrop{position:absolute;inset:0;background:rgba(20,28,60,.42);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s;}
+.backdrop.open{opacity:1;pointer-events:auto;}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;z-index:61;padding:8px 20px calc(22px + var(--safe-bot));max-height:88%;overflow-y:auto;transform:translateY(105%);visibility:hidden;transition:transform .26s ease,visibility 0s .26s;}
+.sheet.open{transform:none;visibility:visible;transition:transform .26s ease;}
+.handle{width:38px;height:4px;border-radius:2px;background:#D7DCEB;margin:2px auto 14px;}
+.sheet h3{margin:0 0 3px;font-size:19px;font-weight:800;}
+.setrow{display:flex;align-items:center;gap:13px;padding:13px 4px;cursor:pointer;}
+.setrow .ic{width:34px;height:34px;border-radius:11px;background:var(--soft);color:var(--indigo);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.setrow .grow{flex:1;min-width:0;}.setrow b{font-size:14.5px;font-weight:700;display:block;}.setrow small{display:block;font-size:12px;color:var(--text2);margin-top:1px;}
+.setrow.danger{background:#FFF1F1;border-radius:14px;padding:13px 14px;}.setrow.danger .ic{background:#FFE0E1;color:var(--red);}.setrow.danger b{color:var(--red);}
+.setrow .chev{color:var(--faint);}
+.toast{position:absolute;left:50%;bottom:90px;transform:translate(-50%,16px);background:#1B2140;color:#fff;padding:10px 16px;border-radius:22px;font-size:12.5px;z-index:90;opacity:0;pointer-events:none;transition:.25s;max-width:88%;text-align:center;line-height:1.4;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+.welcome{background:radial-gradient(120% 70% at 15% 8%,#E4E1FF 0%,transparent 60%),radial-gradient(110% 60% at 95% 98%,#CFF3FF 0%,transparent 62%),#fff;align-items:center;justify-content:center;text-align:center;padding:30px 28px calc(30px + var(--safe-bot));}
+.welcome .logo{width:230px;}
+.welcome h2{margin:44px 0 8px;font-size:23px;font-weight:800;}
+.welcome p{margin:0 0 30px;color:var(--text2);font-size:14px;line-height:1.55;max-width:290px;}
+.welcome .link{margin-top:18px;color:var(--indigo);font-weight:700;font-size:14px;cursor:pointer;background:none;border:none;}
+.iconbox{width:68px;height:68px;border-radius:20px;background:#E5EEFF;color:var(--blue);display:flex;align-items:center;justify-content:center;margin:6px auto 14px;}
+.big{font-size:21px;font-weight:800;margin:0 0 6px;}
+.avwrap{position:relative;width:96px;height:96px;margin:6px auto 18px;border-radius:50%;background:#F0F4FF;display:flex;align-items:center;justify-content:center;}
+.avwrap .cam{position:absolute;right:2px;bottom:2px;width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;border:3px solid #fff;display:flex;align-items:center;justify-content:center;}
+.sug{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:#fff;border:1px solid var(--stroke);border-radius:13px;margin-bottom:8px;font-size:14.5px;cursor:pointer;color:var(--text2);}
+.sug svg{color:var(--faint);}
+.words{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 10px;background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:14px;margin:14px 0;font-size:13.5px;}
+.words div{padding:4px 2px;white-space:nowrap;}.words b{color:var(--faint);font-weight:600;margin-right:4px;font-size:12.5px;}
+.chkrow{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text2);margin:6px 0 16px;cursor:pointer;}
+.orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px 8px;}
+.orb{width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#BFD6FF 0%,#8FB0FF 40%,#C6B6FF 75%,#E9E5FF 100%);box-shadow:0 0 0 18px rgba(130,160,255,.12),0 0 0 40px rgba(130,160,255,.07),0 20px 50px rgba(90,110,240,.35);display:flex;align-items:center;justify-content:center;margin-bottom:34px;animation:fl2 4s ease-in-out infinite;}
+@keyframes fl2{50%{transform:translateY(-6px)}}
+.orb .core{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#6B8BFF,#4B5CF0);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 16px rgba(60,80,220,.4);}
+.askb{background:#fff;border:1px solid var(--stroke);border-radius:18px;padding:14px 18px;font-size:15px;color:var(--text);margin-bottom:22px;box-shadow:0 4px 14px rgba(60,80,160,.08);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.grid2 button{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--stroke);border-radius:14px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);text-align:left;}
+.grid2 button svg{color:var(--indigo);}
+.omsg{background:#fff;border:1px solid var(--stroke);border-radius:18px;border-bottom-left-radius:6px;padding:12px 14px;max-width:92%;margin:0 0 10px;font-size:13.5px;}
+.otag{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--indigo);margin-bottom:7px;letter-spacing:.3px;}
+.otag .mk{width:18px;height:18px;border-radius:6px;background:var(--grad-msg);display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:800;}
+.otag time{margin-left:auto;color:var(--faint);font-weight:600;}
+.omsg ol,.omsg ul{margin:7px 0 0;padding-left:18px;color:var(--text2);font-size:12.5px;line-height:1.7;}
+.amsg{display:flex;gap:9px;margin:0 0 10px;max-width:92%;}
+.amsg .bd{background:#fff;border:1px solid var(--stroke);border-radius:14px;border-top-left-radius:4px;padding:9px 12px;flex:1;}
+.amsg .bd b{font-size:11px;color:var(--text2);display:block;margin-bottom:2px;}.amsg .bd p{margin:0;font-size:12.5px;}
+.achips{display:flex;gap:8px;overflow-x:auto;margin:10px 0;}
+.achip{flex:0 0 auto;width:92px;background:var(--bg);border:1px solid var(--stroke);border-radius:14px;padding:9px 6px;text-align:center;}
+.achip p{margin:6px 0 0;font-size:11px;font-weight:700;}.achip span{display:block;font-size:10px;color:var(--text2);margin-top:2px;}
+.pipe{display:flex;margin:12px 0 4px;}.pipe .st{flex:1;text-align:center;position:relative;font-size:10px;color:var(--faint);font-weight:600;}
+.pipe .st i{display:flex;width:22px;height:22px;border-radius:50%;margin:0 auto 5px;background:#fff;border:2px solid #D3D9EA;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:800;}
+.pipe .st.done i{background:var(--green);border-color:var(--green);color:#fff;}.pipe .st.act i{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 4px rgba(47,123,245,.16);}
+.pipe .st:not(:last-child)::after{content:'';position:absolute;top:11px;left:62%;width:76%;height:2px;background:#D9DEEE;}.pipe .st.done:not(:last-child)::after{background:var(--green);}
+.tcard{background:var(--bg);border:1px solid var(--stroke);border-radius:14px;padding:12px;margin-top:10px;}.tcard h4{margin:0 0 6px;font-size:13px;}
+.trow{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--stroke);font-size:12px;}.trow:last-child{border:none;}.trow b{font-weight:600;text-align:right;font-size:11.5px;max-width:58%;}
+.steps{padding:6px 4px;}
+.step{display:flex;gap:14px;position:relative;padding-bottom:20px;}
+.step:not(:last-child)::before{content:'';position:absolute;left:14px;top:30px;bottom:2px;width:2px;background:#DDE2F0;}
+.step.done:not(:last-child)::before{background:var(--green);opacity:.5;}
+.step .dot{width:30px;height:30px;border-radius:50%;border:2px solid #D3D9EA;background:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;z-index:1;}
+.step.done .dot{background:var(--green);border-color:var(--green);}
+.step.run .dot{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 5px rgba(47,123,245,.16);}
+.step.wait .dot{color:#B7BFD6;}.step.skip .dot{background:#F1F3F9;color:#B7BFD6;}
+.step.appr .dot{background:var(--purple);border-color:var(--purple);box-shadow:0 0 0 5px rgba(124,92,255,.16);}
+.step b{font-size:14.5px;display:block;margin-top:3px;}.step small{font-size:12px;color:var(--text2);}.step.wait b,.step.wait small{color:#A9B1C9;}
+.step.run small{color:var(--blue);font-weight:600;}.step.appr small{color:var(--purple);font-weight:600;}
+.live{background:#fff;border:1px solid var(--stroke);border-radius:16px;padding:14px;margin-top:6px;}
+.live h5{margin:0 0 4px;font-size:13px;}.live p{margin:6px 0 0;font-size:12px;color:var(--text2);}
+.banner{background:#F3EEFF;border:1px solid #DCCFFF;border-radius:14px;padding:11px 13px;display:flex;align-items:center;gap:10px;font-size:12.5px;margin:10px 0;color:var(--text);}
+.banner button{margin-left:auto;background:none;border:none;color:var(--purple);font-weight:800;cursor:pointer;}
+.frow .fic{width:46px;height:46px;border-radius:13px;}
+.prof{display:flex;align-items:center;gap:14px;padding:6px 18px 14px;}
+.prof .nm{font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px;}.prof .on{font-size:12.5px;color:var(--green);font-weight:600;margin-top:3px;display:flex;align-items:center;gap:5px;}.prof .on i{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.kv{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;}
+.kv small{display:block;color:var(--faint);font-size:11.5px;margin-bottom:2px;}.kv b{font-size:14.5px;font-weight:700;}
+.bcanvas{position:relative;flex:1;overflow:auto;background:#fff;background-image:radial-gradient(#DCE1EF 1px,transparent 1px);background-size:18px 18px;touch-action:none;}
+#wireSvg{position:absolute;left:0;top:0;width:900px;height:1000px;pointer-events:none;overflow:visible;}
+.bnode{position:absolute;width:156px;min-height:58px;background:#fff;border:1.5px solid var(--stroke);border-radius:14px;padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:grab;user-select:none;box-shadow:0 3px 10px rgba(60,80,160,.08);}
+.bnode.sel{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,123,245,.16);}
+.bnode .bi{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;}
+.bnode p{margin:0;font-size:12px;font-weight:700;}.bnode span{font-size:10px;color:var(--text2);}
+.bhandle{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--blue);color:var(--blue);display:flex;align-items:center;justify-content:center;cursor:crosshair;}
+.btool{display:none;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--stroke);background:#fff;font-size:13px;font-weight:700;}
+
+.btn svg{display:inline-block;vertical-align:-3px;}
+#shareSheet .cardlist .row{padding:8px 14px;}
+#shareSheet .lbl{margin:10px 0 6px;}
+#shareSheet{max-height:94%;}
+</style></head>
+<body><div id="app">
+<section class="root active" id="root-msg">
+  <div class="head"><h1>Messages</h1>
+    <button class="ibtn" onclick="openPage('contacts')" title="Contacts"><i data-i="users" data-s="22"></i></button>
+    <button class="ibtn" onclick="openPage('newchat')" title="New chat"><i data-i="edit" data-s="21"></i></button></div>
+  <div class="search" onclick="openPage('search')"><i data-i="search" data-s="18"></i><span>Search chats, agents, or contacts</span></div>
+  <div class="chips" id="msgChips"></div>
+  <div class="body flush" id="chatList"></div>
+</section>
+<section class="root" id="root-agents">
+  <div class="head"><h1>Agent Center</h1><button class="ibtn" onclick="openOrch()" title="Orchestrator"><i data-i="sparkle" data-s="22"></i></button></div>
+  <div class="seg" id="agentSeg"><button class="on" data-v="mine" onclick="agentTab('mine')">My Agents</button><button data-v="tpl" onclick="agentTab('tpl')">Templates</button></div>
+  <div class="body flush" id="agentsBody"></div>
+</section>
+<section class="root" id="root-flow">
+  <div class="head"><h1>Flow</h1><button class="ibtn" onclick="newWorkflow()" title="New workflow"><i data-i="plus" data-s="22"></i></button></div>
+  <div class="body" id="flowList"></div>
+</section>
+<section class="root" id="root-vault">
+  <div class="head"><h1>My Vault</h1><button class="ibtn" onclick="toast('Everything here is private to you')"><i data-i="shield" data-s="22"></i></button></div>
+  <div class="chips" id="vaultChips"><button class="chip on" data-v="files" onclick="vaultTab('files')">Files</button><button class="chip" data-v="notes" onclick="vaultTab('notes')">Notes</button><button class="chip" data-v="mem" onclick="vaultTab('mem')">Memories</button></div>
+  <div class="body flush" id="vaultBody"></div>
+</section>
+<section class="root" id="root-more">
+  <div class="head"><h1>Indie Profile</h1></div>
+  <div class="body flush" id="profileBody"></div>
+</section>
+<nav id="tabbar">
+  <button class="on" data-t="msg" onclick="go('msg')"><i data-i="chat" data-s="23"></i>Message<span class="bd" id="msgBadge" style="display:none"></span></button>
+  <button data-t="agents" onclick="go('agents')"><i data-i="user" data-s="23"></i>Agents<span class="bd" id="agBadge" style="display:none"></span></button>
+  <button data-t="flow" onclick="go('flow')"><i data-i="flow" data-s="23"></i>Flow</button>
+  <button data-t="vault" onclick="go('vault')"><i data-i="shield" data-s="23"></i>Vault</button>
+  <button data-t="more" onclick="go('more')"><i data-i="grid" data-s="23"></i>More</button>
+</nav>
+
+<section class="page fade open welcome" id="pg-welcome" style="z-index:50">
+  <img class="logo" src="data:image/webp;base64,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" alt="indie">
+  <h2>Personal Chat</h2>
+  <p>Your private space for conversations, clear connections, and intelligent collaboration.</p>
+  <button class="btn primary block" onclick="openPage('createid')">Get Started</button>
+  <button class="link" onclick="signIn()">Sign In</button>
+</section>
+<section class="page" id="pg-createid" style="z-index:51">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <h2 class="big" style="margin-top:2px">Create Your ID</h2>
+    <p class="hint">Your identity is your key to Indie. It's private, secure, and only yours.</p>
+    <div class="avwrap"><img src="data:image/webp;base64,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" width="52" height="52" alt=""><span class="cam"><i data-i="camera" data-s="14"></i></span></div>
+    <div class="field" id="fId"><label>Choose your Indie ID</label><div class="in"><input id="idInput" placeholder="indie_user" autocapitalize="off" oninput="idCheck()"><span class="suffix">@indie.id</span></div><div class="err" id="idErr"></div><div class="ok">This ID is available</div></div>
+    <div class="field" id="fPin"><label>Local PIN (min. 6 characters)</label><div class="in"><input id="pinInput" type="password" placeholder="••••••"></div><div class="err">Use at least 6 characters</div></div>
+    <div class="lbl faint">Suggestions</div><div id="idSugs"></div>
+    <button class="btn primary block" style="margin-top:14px" onclick="createIdNext()">Continue</button>
+  </div>
+</section>
+<section class="page" id="pg-phrase" style="z-index:52">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <div class="iconbox"><i data-i="shield" data-s="34"></i></div>
+    <h2 class="big center">Create Phrase Key</h2>
+    <p class="hint center">Your phrase key is the only way to recover your account. Keep it safe and private.</p>
+    <div class="words" id="wordGrid"></div>
+    <div class="chkrow" id="phraseRow" onclick="phraseToggle()"><span class="cb" id="phraseCb"><i data-i="check" data-s="14"></i></span><span>I have saved my phrase key in a safe place</span></div>
+    <button class="btn primary block" onclick="phraseContinue()">Continue</button>
+  </div>
+</section>
+<section class="page withnav" id="pg-contacts">
+  <div class="head"><h1>Contacts</h1><button class="ibtn" onclick="renderContactsPage();toast('Refreshed')"><i data-i="refresh" data-s="20"></i></button></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ctSearch" placeholder="Search contacts..." oninput="renderContactsPage()"></div>
+  <div class="chips" id="ctChips"></div>
+  <div class="body flush" id="ctBody"></div>
+  <button class="fab" onclick="openAddContact(false)"><i data-i="plus" data-s="26"></i></button>
+</section>
+<section class="page" id="pg-addcontact">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="acTitle">Create New Contact</h1></div>
+  <div class="seg" id="acSeg"><button class="on" data-v="people" onclick="acTab('people')"><i data-i="user" data-s="16"></i>People</button><button data-v="agent" onclick="acTab('agent')"><i data-i="sparkle" data-s="16"></i>Agent</button></div>
+  <div class="body" id="acPeople">
+    <div class="field" id="fName"><label>Name</label><div class="in"><input id="acName" placeholder="John Smith"></div><div class="err">Name is required</div></div>
+    <div class="field" id="fInfo"><label>Indie ID / Phone / Email</label><div class="in"><input id="acInfo" placeholder="e.g. john@indie.id"></div><div class="err">Enter an Indie ID, phone number or email</div></div>
+    <div class="field"><label>Add to Group (Optional)</label><div class="in"><select id="acGroup"></select></div></div>
+    <button class="btn primary block" style="margin-top:8px" onclick="saveContact()">Save Contact</button>
+  </div>
+  <div class="body" id="acAgent" style="display:none">
+    <div class="card center" style="padding:18px">
+      <div class="iconbox" style="margin-top:0"><i data-i="sparkle" data-s="30"></i></div>
+      <b style="font-size:16px">Agents are created by the Orchestrator</b>
+      <p class="hint" style="margin-top:8px">Tell the Orchestrator what you need. It builds the agent and defines its workflow — then you can chat with it directly.</p>
+      <button class="btn primary block" onclick="closePage('addcontact');openOrch('Create an agent to ')">Ask the Orchestrator</button>
+    </div>
+  </div>
+</section>
+<section class="page" id="pg-newchat">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Create New Chat</h1></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ncSearch" placeholder="Search contacts or agents" oninput="renderNewChat()"></div>
+  <div class="body flush" id="ncBody"></div>
+</section>
+<section class="page" id="pg-search">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Search</h1><i data-i="search" data-s="20" style="color:var(--text2)"></i></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="sqInput" placeholder="Search messages, contacts, groups..." oninput="renderSearch()"></div>
+  <div class="chips" id="sqChips"></div>
+  <div class="body flush" id="sqBody"></div>
+</section>
+<section class="page" id="pg-chat">
+  <div class="head sub" style="padding-bottom:8px;border-bottom:1px solid var(--stroke);background:#fff">
+    <button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div id="chAv"></div>
+    <div style="flex:1;min-width:0;cursor:pointer" onclick="openSettings()"><h1 id="chName" style="font-size:16px;margin:0"></h1><div class="t2" id="chSub"></div></div>
+    <button class="ibtn" onclick="toast('Calls are not part of this preview')"><i data-i="phone" data-s="20"></i></button>
+    <button class="ibtn" onclick="openSettings()"><i data-i="kebab" data-s="20"></i></button>
+  </div>
+  <div class="chat" id="chBody"></div>
+  <div class="replybar" id="chReply"></div>
+  <div class="composer"><button class="plus" onclick="openAttach('chat')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="chInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendChat()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-agentchat">
+  <div class="head sub" style="padding-bottom:8px;border-bottom:1px solid var(--stroke);background:#fff">
+    <button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div id="agAv"></div>
+    <div style="flex:1;min-width:0"><h1 id="agName" style="font-size:16px;margin:0"></h1><div class="t2" id="agSub"></div></div>
+    <button class="ibtn" onclick="openAgentInfo()"><i data-i="kebab" data-s="20"></i></button>
+  </div>
+  <div class="chat" id="agBody"></div>
+  <div class="replybar" id="agReply"></div>
+  <div class="composer"><button class="plus" onclick="openAttach('agent')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="agInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendAgent()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendAgent()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-settings">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Chat Settings</h1></div>
+  <div class="body" id="stBody"></div>
+</section>
+<section class="page" id="pg-creategroup">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <div class="iconbox"><i data-i="users" data-s="32"></i></div>
+    <h2 class="big center">Create Group Chat</h2>
+    <p class="hint center">Add members and give your group a name and description.</p>
+    <div class="field" id="fGName"><label>Group Name</label><div class="in"><input id="gName" placeholder="Marketing Team"></div><div class="err">Group name is required</div></div>
+    <div class="field"><label>Description (Optional)</label><div class="in ta"><textarea id="gDesc" placeholder="Discuss campaigns, updates, and more."></textarea></div></div>
+    <div class="lbl">Add Members</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px" id="gMembers"></div>
+    <div class="card" style="padding:13px 14px;display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="flex:1"><b style="font-size:14.5px">Allow new members</b><div class="hint" style="margin:2px 0 0">Others can join this group via invite link</div></div>
+      <span class="sw on" id="gAllow" onclick="this.classList.toggle('on')"></span></div>
+    <div class="cardlist" id="gVis" style="margin-bottom:16px"></div>
+    <button class="btn primary block" onclick="createGroup()">Create Group</button>
+  </div>
+</section>
+<section class="page" id="pg-invite">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="ivTitle">Invite to Group</h1></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ivSearch" placeholder="Search contacts..." oninput="renderInvite()"></div>
+  <div class="body flush" id="ivBody"></div>
+  <div style="padding:10px 18px calc(14px + var(--safe-bot));border-top:1px solid var(--stroke);background:#fff"><div class="hint" id="ivCount" style="margin:0 0 8px;font-weight:700"></div><button class="btn primary block" id="ivBtn" onclick="inviteDone()">Invite</button></div>
+</section>
+<section class="page" id="pg-orch">
+  <div class="head sub" style="padding-bottom:8px"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div style="flex:1"><h1 style="font-size:17px;margin:0">Orchestrator Chat Room</h1><div class="t2">Direct your agents. Turn ideas into action.</div></div></div>
+  <div class="orbwrap" id="orbWrap">
+    <div class="orb"><div class="core"><i data-i="sparkle" data-s="26"></i></div></div>
+    <div class="askb">What would you like to do today?</div>
+    <div class="grid2" id="orbChips"></div>
+  </div>
+  <div class="chat" id="orBody" style="display:none"></div>
+  <div class="composer"><button class="plus" onclick="toast('Attachments are coming soon')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="orInput" placeholder="Type your request..." onkeydown="if(event.key==='Enter')sendOrch()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendOrch()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-flowrun">
+  <div class="head sub"><button class="ibtn" onclick="leaveFlow()"><i data-i="back" data-s="22"></i></button>
+    <div style="flex:1"><h1 style="font-size:19px;margin:0" id="frTitle">INDIE Flow</h1><div class="t2" id="frSub">Running your workflow...</div></div>
+    <button class="ibtn" onclick="openBuilder()" title="Edit in builder"><i data-i="edit" data-s="20"></i></button></div>
+  <div class="body">
+    <div class="steps" id="frSteps"></div>
+    <div class="banner" id="frBanner" style="display:none"><i data-i="lock" data-s="18"></i><span>Paused — waiting for your approval</span><button onclick="openSheet('apprSheet')">Review</button></div>
+    <div class="lbl faint" style="margin-top:4px">Live output</div>
+    <div class="live"><h5 id="frLiveT">Ready to run</h5><svg id="frChart" viewBox="0 0 300 70" width="100%" height="70" preserveAspectRatio="none"><path id="frArea" d="" fill="rgba(47,123,245,.10)"/><path id="frPath" d="M0 55 L300 55" fill="none" stroke="#2F7BF5" stroke-width="2.5" stroke-linecap="round"/></svg><p id="frLive">Tap Run to start this workflow.</p></div>
+  </div>
+  <div style="padding:10px 18px calc(14px + var(--safe-bot));background:var(--bg)"><button class="btn block" id="frBtn" onclick="flowBtn()">Run now</button></div>
+</section>
+<section class="page" id="pg-builder">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Builder</h1>
+    <button class="ibtn" onclick="bValidate()" title="Validate"><i data-i="check" data-s="21"></i></button>
+    <button class="ibtn" onclick="bAdd()" title="Add node"><i data-i="plus" data-s="22"></i></button></div>
+  <div class="bcanvas" id="bCanvas"><svg id="wireSvg"></svg></div>
+  <div class="btool" id="bTool"><span id="bSel" style="flex:1"></span><button class="btn sm" id="bCondBtn" onclick="bCondition()" style="display:none">Condition</button><button class="btn sm danger" onclick="bDelete()">Delete</button></div>
+  <div class="hint center" style="margin:0;padding:8px 16px;background:#fff">Drag to move · drag the blue dot to connect · tap a node to select</div>
+</section>
+<section class="page" id="pg-output">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="opTitle">Result</h1></div>
+  <div class="body" id="opBody"></div>
+</section>
+<section class="page" id="pg-consent">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Privacy &amp; Security</h1></div>
+  <div class="body" id="cnBody"></div>
+</section>
+<section class="page" id="pg-connectors">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Connectors</h1></div>
+  <div class="body" id="cxBody"></div>
+</section>
+
+<div class="backdrop" id="bd" onclick="closeSheets()"></div>
+<div class="sheet" id="shareSheet"></div>
+<div class="sheet" id="msgSheet"></div>
+<div class="sheet" id="attachSheet"></div>
+<div class="sheet" id="pickSheet"></div>
+<div class="sheet" id="membersSheet"></div>
+<div class="sheet" id="noteSheet"></div>
+<div class="sheet" id="condSheet"></div>
+<div class="sheet" id="apprSheet">
+  <div class="handle"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div id="apprAv"></div><div><h3 style="font-size:16px">Marketing Agent</h3><div class="hint" style="margin:0">Requesting permission</div></div></div>
+  <div class="cardlist" style="margin-bottom:14px">
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Wants to</div><div class="nm">Publish performance update</div></div></div>
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Access / scope</div><div class="nm">External platform: Instagram</div></div></div>
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Autonomy</div><div class="nm">One-time approval</div></div></div></div>
+  <div class="btnrow"><button class="btn" onclick="apprDecide(false)">Deny</button><button class="btn primary" onclick="apprDecide(true)">Allow</button></div>
+</div>
+<div class="toast" id="toast"></div>
+</div>
+<script>const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ICONS = {
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  user: '<circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>',
+  users: '<circle cx="9" cy="8.5" r="3"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5"/><path d="M16 5.6a3 3 0 0 1 0 5.8M18 14.2c2 .6 3.5 2.4 3.5 4.8"/>',
+  flow: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.5 6H14a3 3 0 0 1 3 3v6.5M8.5 18H14"/>',
+  shield: '<path d="M12 3l7 3v5.2c0 4.4-3 7.9-7 9.8-4-1.9-7-5.4-7-9.8V6l7-3z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+  grid: '<circle cx="6" cy="6" r="1.4"/><circle cx="12" cy="6" r="1.4"/><circle cx="18" cy="6" r="1.4"/><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/><circle cx="6" cy="18" r="1.4"/><circle cx="12" cy="18" r="1.4"/><circle cx="18" cy="18" r="1.4"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  send: '<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>',
+  plane: '<path d="M4 12l16-8-6 16-3-7z"/>',
+  smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.5 4.5 0 0 0 7 0M9 9.6h.01M15 9.6h.01"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  checks: '<path d="M2.5 12.5l4.5 4.5L15 8.5M10 16l1 1L21 7"/>',
+  chev: '<path d="M9 5l7 7-7 7"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/>',
+  camera: '<path d="M4 8.5h3l1.8-2.5h6.4L17 8.5h3V19H4z"/><circle cx="12" cy="13.5" r="3.4"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  bell: '<path d="M6 16v-4.5a6 6 0 0 1 12 0V16l1.6 2H4.4zM10 21h4"/>',
+  file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  image: '<rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-8 8"/>',
+  download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+  mega: '<path d="M4 10v4h3.5l7.5 4V6L7.5 10H4zM18 9a4 4 0 0 1 0 6"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  edit: '<path d="M4 20l1-4.2L16.5 4.3l3.2 3.2L8.2 19z"/><path d="M14.5 6.3l3.2 3.2"/>',
+  refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  trash: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
+  pin: '<path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/>',
+  sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',
+  mail: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M3.5 8l8.5 6 8.5-6"/>',
+  phone: '<path d="M6.5 4h3l1.5 4-2 1.5a10 10 0 0 0 5.5 5.5L16 13l4 1.5v3a2 2 0 0 1-2 2A14 14 0 0 1 4.5 6a2 2 0 0 1 2-2z"/>',
+  kebab: '<circle cx="12" cy="5.5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="18.5" r="1.4"/>',
+  sparkle: '<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/>',
+  bolt: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/>',
+  logout: '<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>',
+  note: '<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',
+};
+function icon(name, s = 20, extra = '') { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[name] || ''}</svg>`; }
+function hydrateIcons(root = document) { $$('[data-i]', root).forEach(el => { const st = el.getAttribute('style'); el.outerHTML = icon(el.dataset.i, +el.dataset.s || 20, st ? `style="${st}"` : ''); }); }
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2300); }
+
+const stack = [];
+let curTab = 'msg';
+function updateNav() {
+  const top = stack.length ? $('#pg-' + stack[stack.length - 1]) : null;
+  const welcome = ['welcome', 'createid', 'phrase'].some(p => stack.includes(p));
+  $('#tabbar').classList.toggle('hide', welcome || (!!top && !top.classList.contains('withnav')));
+}
+function go(tab) {
+  curTab = tab; stack.splice(0).forEach(id => $('#pg-' + id).classList.remove('open'));
+  $$('.root').forEach(r => r.classList.toggle('active', r.id === 'root-' + tab));
+  $$('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  ({ msg: renderMessages, agents: renderAgentCenter, flow: renderFlowList, vault: renderVault, more: renderProfile }[tab])();
+  updateNav();
+}
+function openPage(id) {
+  const el = $('#pg-' + id); if (!el) return;
+  if (stack[stack.length - 1] === id) return;
+  if (stack.includes(id)) stack.splice(stack.indexOf(id), 1);
+  const init = { contacts: renderContactsPage, newchat: renderNewChat, search: renderSearch, consent: renderConsent, connectors: renderConnectors, createid: initCreateId, creategroup: initCreateGroup }[id];
+  if (init) init();
+  el.classList.add('open'); stack.push(id); updateNav();
+}
+function back() { closeSheets(); const id = stack.pop(); if (!id) return; $('#pg-' + id).classList.remove('open'); updateNav(); refreshLists(); }
+function closePage(id) { const i = stack.indexOf(id); if (i > -1) { stack.splice(i, 1); $('#pg-' + id).classList.remove('open'); updateNav(); } }
+function refreshLists() { renderMessages(); if ($('#pg-contacts').classList.contains('open')) renderContactsPage(); if (curTab === 'agents') renderAgentCenter(); }
+function openSheet(id) { closeSheets(); $('#bd').classList.add('open'); $('#' + id).classList.add('open'); }
+function closeSheets() { $('#bd').classList.remove('open'); $$('.sheet').forEach(s => s.classList.remove('open')); }
+
+const NOW = () => Date.now();
+const ago = m => NOW() - m * 60000;
+const p2 = n => ('0' + n).slice(-2);
+const fmtTime = ts => { const d = new Date(ts); return p2(d.getHours()) + ':' + p2(d.getMinutes()); };
+const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+const dayLabel = ts => dayKey(ts) === dayKey(NOW()) ? 'Today' : dayKey(ts) === dayKey(NOW() - 864e5) ? 'Yesterday' : new Date(ts).toLocaleDateString([], { day: 'numeric', month: 'short' });
+const listTime = ts => dayKey(ts) === dayKey(NOW()) ? fmtTime(ts) : dayLabel(ts);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const PASTELS = [['#E6E9FF', '#4B5CF0'], ['#E0F5EA', '#16A34A'], ['#FFEBD6', '#D9730D'], ['#FBE4F0', '#C2327D'], ['#DDF3FA', '#0E8AA8'], ['#EFE7FF', '#7C5CFF']];
+const hash = s => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const initialsOf = n => { const p = String(n).trim().split(/\s+/); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : (p[0][1] || ''))).toUpperCase(); };
+const personAv = (name, size = '', presence = false) => { const [bg, fg] = PASTELS[hash(name) % PASTELS.length]; return `<div class="av ${size}" style="background:${bg};color:${fg}">${esc(initialsOf(name))}${presence ? '<i class="pres"></i>' : ''}</div>`; };
+const groupAv = (size = '') => `<div class="av ${size}" style="background:#E5EEFF;color:#2F7BF5">${icon('users', size === 'lg' ? 32 : size === 'sm' ? 18 : 22)}</div>`;
+const AGENT_STYLE = {
+  'Marketing Agent': ['#8B5CF6', 'mega', 'Marketing & Content'], 'Research Agent': ['#3B82F6', 'search', 'Research & Analysis'],
+  'Finance Agent': ['#22C55E', 'chart', 'Finance & Accounting'], 'Personal Assistant': ['#F59E0B', 'clock', 'Daily Life & Productivity'],
+  'Health Coach': ['#F43F5E', 'heart', 'Fitness, nutrition, wellness'], 'Content Creator': ['#14B8A6', 'edit', 'Content & Social Media'],
+  'Travel Agent': ['#0EA5E9', 'globe', 'Flights & hotels'], 'Itinerary Agent': ['#6366F1', 'clock', 'Daily itineraries'],
+};
+const AGENT_COLORS = ['#8B5CF6', '#3B82F6', '#22C55E', '#F59E0B', '#F43F5E', '#14B8A6', '#6366F1', '#0EA5E9'];
+const agentStyle = a => { const s = AGENT_STYLE[a.name]; return s ? { color: s[0], ic: s[1], tag: s[2] } : { color: AGENT_COLORS[hash(a.name) % AGENT_COLORS.length], ic: 'sparkle', tag: a.role || 'Custom agent' }; };
+const agentAv = (a, size = '') => { const st = agentStyle(a), px = size === 'sm' ? 34 : size === 'xs' ? 30 : size === 'lg' ? 72 : 46; return `<div class="av ag ${size}" style="background:${st.color}">${icon(st.ic, Math.round(px * .5), 'stroke="#fff"')}</div>`; };
+const orchAv = (px = 46) => `<div class="av" style="width:${px}px;height:${px}px;background:var(--grad-msg);color:#fff">${icon('sparkle', Math.round(px * .48))}</div>`;
+const AGENT_STATE = { working: ['', 'Active'], ready: ['', 'Active'], approval: ['appr', 'Approval required'], scheduled: ['warn', 'Scheduled'], idle: ['idle', 'Idle'] };
+const agentStatusHTML = a => { const [c, l] = AGENT_STATE[a.state] || ['idle', 'Idle']; return `<div class="st ${c}"><i></i>${l}</div>`; };
+
+let mid = 0;
+const mk = (me, t, extra) => Object.assign({ id: 'm' + (++mid), me, t, ts: NOW(), status: me ? 'sent' : undefined }, extra || {});
+const ME = { name: 'Clips', id: 'clips_indie' };
+const PEOPLE = [
+  { id: 'p1', kind: 'person', name: 'Alex Johnson', info: 'alex@indie.id', group: 'Work', online: true, pinned: true, muted: false, unread: 0, seen: 'Online',
+    messages: [{ me: false, t: "Hey, let's discuss the report", ts: ago(75) }, { me: true, t: 'Sure! I just sent the latest numbers.', ts: ago(70), status: 'read' }, { me: false, type: 'file', file: { name: 'Campaign-Report.pdf', size: '2.4 MB' }, ts: ago(41) }, { id: 'sd4', me: true, t: "Great! Let's review it in the next meeting.", ts: ago(38), status: 'read', rx: { '👍': 1 } }, { me: false, t: 'Sounds good, see you at 3', ts: ago(35), replyTo: { id: 'sd4', who: 'You', t: "Great! Let's review it in the next meeting." } }] },
+  { id: 'p2', kind: 'person', name: 'Sarah Wilson', info: 'sarah@indie.id', group: 'Clients', online: true, pinned: false, muted: false, unread: 1, seen: 'Online', messages: [{ me: false, t: "Sounds good! Let's proceed with the plan.", ts: ago(190) }] },
+  { id: 'p3', kind: 'person', name: 'Michael Tan', info: 'michael@indie.id', group: '', online: false, pinned: false, muted: false, unread: 0, seen: 'Last seen 10m ago', messages: [{ me: false, t: 'Thanks for the update.', ts: ago(400) }] },
+  { id: 'p4', kind: 'person', name: 'Emma Davis', info: 'emma@indie.id', group: 'Work', online: true, pinned: false, muted: false, unread: 0, seen: 'Online', messages: [{ me: false, t: 'Great!', ts: ago(520) }] },
+  { id: 'p5', kind: 'person', name: 'Lisa Chen', info: 'lisa@indie.id', group: '', online: false, pinned: false, muted: false, unread: 0, seen: 'Offline', messages: [] },
+  { id: 'p6', kind: 'person', name: 'David Kim', info: 'david@indie.id', group: 'Work', online: false, pinned: false, muted: false, unread: 0, seen: 'Offline', messages: [{ me: false, t: 'Project update', ts: ago(1500) }] },
+  { id: 'p7', kind: 'person', name: 'Mom', info: '+62 812-0000-1111', group: 'Family', online: false, pinned: false, muted: false, unread: 0, seen: 'Offline', messages: [{ me: false, t: 'See you later! ❤️', ts: ago(1700) }] },
+  { id: 'p8', kind: 'person', name: 'Rudi Santoso', info: 'rudi@indie.id', group: 'Clients', online: false, pinned: false, muted: false, unread: 0, seen: 'Offline', messages: [] },
+];
+const GROUPS = [
+  { id: 'g1', kind: 'group', name: 'Team Marketing', desc: 'Campaign planning and weekly syncs.', vis: 'private', allowNew: true, members: ['p1', 'p2', 'p4', 'p6'], muted: false, pinned: false, unread: 0,
+    messages: [{ me: false, from: 'Alex Johnson', type: 'file', file: { name: 'Campaign Report.pdf', size: '2.4 MB' }, ts: ago(300) }, { me: false, from: 'Alex Johnson', t: "Here's the latest campaign update.", ts: ago(299) }, { me: true, t: "Great! Let's review it in the next meeting.", ts: ago(290), status: 'read' }, { me: false, from: 'Sarah Wilson', t: "I'll also share the creative brief shortly.", ts: ago(120), rx: { '👍': 1 } }, { me: false, from: 'Emma Davis', t: 'Campaign update meeting at 10 AM.', ts: ago(30) }] },
+  { id: 'g2', kind: 'group', name: 'Family', desc: 'Family chat', vis: 'private', allowNew: false, members: ['p7'], muted: false, pinned: false, unread: 0, messages: [{ me: false, from: 'Mom', t: 'Dinner at 7?', ts: ago(1900) }] },
+];
+const CHATS = [...PEOPLE, ...GROUPS];
+const chatById = id => CHATS.find(c => c.id === id);
+const personById = id => PEOPLE.find(p => p.id === id);
+const AGENTS = [
+  { id: 'a1', name: 'Marketing Agent', role: 'Campaign monitoring & reporting', state: 'approval', activity: 'Wants to publish Campaign Alpha update', approval: true,
+    workflow: ['Read campaign analytics', 'Generate report', 'Notify you', 'Ask your approval before publishing'],
+    messages: [{ me: true, t: "Can you create a summary of last week's campaign performance?", ts: ago(34), status: undefined },
+      { me: false, t: "I've analyzed the data and here's your weekly campaign summary:", ts: ago(33) },
+      { me: false, type: 'card', ts: ago(32), card: { title: 'Campaign Performance', metrics: [['Total Reach', '124.5K', '↑ 12.4%'], ['Engagement Rate', '4.8%', '↑ 2.1%'], ['Conversions', '2.3K', '↑ 8.7%'], ['Spend', 'Rp 8.2jt', '']], insights: ['Instagram performed best (CTR 5.2%)', 'Audience engagement increased by 12.4%', 'Conversion rate improved by 8.7%'] } },
+      { me: false, type: 'file', file: { name: 'Weekly Report.pdf', size: '2.4 MB' }, ts: ago(31) }] },
+  { id: 'a2', name: 'Research Agent', role: 'Market & competitor research', state: 'working', activity: 'Researching competitor pricing', workflow: ['Search public web data', 'Summarize findings', 'Report results to you'], messages: [{ me: false, t: 'Found 5 new insights for your project.', ts: ago(55) }] },
+  { id: 'a3', name: 'Finance Agent', role: 'Invoices & cash flow', state: 'scheduled', activity: 'Next run tomorrow 08:00', workflow: ['Read invoices', 'Calculate weekly cash flow', 'Save report to Vault'], messages: [{ me: false, t: 'Your expense summary is ready.', ts: ago(300) }] },
+  { id: 'a4', name: 'Personal Assistant', role: 'Scheduling & daily brief', state: 'idle', activity: 'Idle', workflow: ['Read your calendar', 'Summarize unread emails', 'Prepare daily brief', 'Send reminders'], messages: [] },
+  { id: 'a5', name: 'Health Coach', role: 'Fitness, nutrition, wellness', state: 'scheduled', activity: 'Morning workout reminder', workflow: ['Plan workouts', 'Track habits', 'Send reminders'], messages: [{ me: false, t: 'Time for your morning workout! 💪', ts: ago(1440) }] },
+  { id: 'a6', name: 'Content Creator', role: 'Content & social media', state: 'ready', activity: 'Ready — waiting for tasks', workflow: ['Draft posts', 'Suggest hashtags', 'Ask your approval before publishing'], messages: [] },
+];
+const agentById = id => AGENTS.find(a => a.id === id);
+const TEMPLATES = [
+  { name: 'Marketing Agent', desc: 'monitor campaigns and report performance weekly' }, { name: 'Research Agent', desc: 'research competitors and summarize findings' },
+  { name: 'Finance Agent', desc: 'track invoices and summarize cash flow' }, { name: 'Personal Assistant', desc: 'read my calendar and prepare a daily brief' },
+  { name: 'Health Coach', desc: 'plan workouts and remind me every morning' }, { name: 'Content Creator', desc: 'draft social media posts for my brand' },
+];
+const OUTPUTS = [
+  { id: 'o1', name: 'Weekly Marketing Report.pdf', ext: 'pdf', kind: 'Report', ts: ago(30), summary: 'Reach up 12.4%, engagement 4.8%, conversions 2.3K this week.', ai: 'Instagram performed best; no action needed today.', raw: 'campaign_alpha_metrics.json · updated this morning', activity: ['Fetched campaign analytics', 'Compared to 7-day average', 'Drafted summary'] },
+  { id: 'o2', name: 'Project Plan.docx', ext: 'docx', kind: 'Document', ts: ago(1500), summary: 'Draft project plan for Q4 launch.', ai: 'Milestones look realistic; two dependencies flagged.', raw: 'plan_v3.docx', activity: ['Read brief', 'Structured milestones'] },
+  { id: 'o3', name: 'Meeting Notes.txt', ext: 'txt', kind: 'Note', ts: ago(1560), summary: 'Notes from the weekly sync.', ai: 'Three action items identified.', raw: 'notes.txt', activity: ['Transcribed notes'] },
+  { id: 'o4', name: 'Personal Photo.jpg', ext: 'jpg', kind: 'Image', ts: ago(2900), summary: 'Photo stored in your vault.', ai: 'No analysis available for images.', raw: 'IMG_2041.jpg', activity: [] },
+  { id: 'o5', name: 'Bank Statement.pdf', ext: 'pdf', kind: 'Report', ts: ago(4400), summary: 'Monthly bank statement.', ai: 'Spending is 6% below last month.', raw: 'statement.pdf', activity: ['Read statement', 'Categorized spending'] },
+  { id: 'o6', name: 'Travel Plan.pdf', ext: 'pdf', kind: 'Report', ts: ago(5800), summary: '7-day family trip plan.', ai: 'Budget estimate Rp 32.6jt.', raw: 'travel.pdf', activity: ['Combined agent results'] },
+];
+const EXT = { pdf: ['#EF4444', 'file'], docx: ['#3B82F6', 'file'], txt: ['#60A5FA', 'note'], jpg: ['#22C55E', 'image'] };
+const NOTES = [{ id: 'n1', title: 'Campaign ideas', text: 'Short videos for Instagram, collab with two creators.', ts: ago(900) }, { id: 'n2', title: 'Reminders', text: 'Renew domain before Friday.', ts: ago(3000) }];
+const MEMORIES = [{ agent: 'a1', note: 'Prefers concise report tone' }, { agent: 'a1', note: 'Campaign Alpha runs through Oct 30' }, { agent: 'a2', note: 'Focus: SME SaaS pricing in the ID market' }, { agent: 'a4', note: 'Prefers Bahasa Indonesia in the morning brief' }];
+const MANDATES = [{ id: 'mm1', agent: 'a1', purpose: 'Campaign monitoring — read analytics, generate report', autonomy: 'Daily at 09:00', status: 'active' }, { id: 'mm2', agent: 'a2', purpose: 'Competitor research — public web only', autonomy: 'Manual only', status: 'paused' }];
+const CONNECTORS = [{ id: 'google_calendar', name: 'Google Calendar', desc: 'Read-only — Personal Assistant reads your calendar', ic: 'clock', on: false }, { id: 'gmail', name: 'Gmail', desc: 'Read-only — summarize unread emails', ic: 'mail', on: false }, { id: 'google_drive', name: 'Google Drive', desc: 'Read-only — list your recent files', ic: 'file', on: false }];
+
+let curChat = null, curAgent = null, reply = null, typingIn = null, actRoom = null, actId = null, attachRoom = null, scopeOpen = false;
+const listOf = room => room === 'chat' ? curChat.messages : curAgent.messages;
+const findMsg = (room, id) => listOf(room).find(m => m.id === id);
+const ensureIds = l => l.forEach(m => { if (!m.id) m.id = 'm' + (++mid); if (!m.ts) m.ts = NOW(); });
+const snippetOf = m => m.deleted ? 'Message deleted' : m.type === 'file' ? '📎 ' + m.file.name : m.type === 'output' ? '📄 ' + m.output.title : m.type === 'card' ? '📊 ' + m.card.title : (m.t || '');
+const tickHTML = m => (!m.me || !m.status) ? '' : `<span class="tk ${m.status === 'read' ? 'read' : ''}">${m.status === 'sent' ? icon('check', 13) : icon('checks', 15)}</span>`;
+function fileIc(name) { const ext = (name.split('.').pop() || '').toLowerCase(), e = EXT[ext] || ['#8B93AD', 'file']; return `<div class="fic" style="background:${e[0]}">${icon(e[1], 20, 'stroke="#fff"')}</div>`; }
+function cardHTML(m, room) {
+  const c = m.card;
+  return `<div class="rcard" onclick="openMsg('${room}','${m.id}')"><h5>${esc(c.title)}</h5>` +
+    (c.metrics ? `<div class="mets">${c.metrics.map(x => `<div class="met"><small>${esc(x[0])}</small><b>${esc(x[1])}</b>${x[2] ? `<i>${esc(x[2])}</i>` : ''}</div>`).join('')}</div>` : '') +
+    (c.insights ? `<div class="ins">Key Insights</div><ul>${c.insights.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : '') +
+    `<div class="acts"><button class="btn" onclick="event.stopPropagation();openOutputByName('Weekly Marketing Report.pdf')">View Full Report</button><button class="btn ${m.saved ? '' : 'ghost'}" ${m.saved ? 'disabled' : ''} onclick="event.stopPropagation();saveMsg('${room}','${m.id}')">${m.saved ? 'Saved ✓' : 'Save to Vault'}</button></div></div>`;
+}
+function msgHTML(m, room, group) {
+  if (m.sys) return `<div class="sysmsg">${esc(m.t)}</div>`;
+  const cls = m.me ? 'me' : 'them', open = `openMsg('${room}','${m.id}')`; let body;
+  if (m.deleted) body = `<div class="bub" style="opacity:.55;font-style:italic;cursor:default;background:#fff;color:var(--text2)">🚫 Message deleted</div>`;
+  else {
+    const q = m.replyTo ? `<div class="quote" onclick="event.stopPropagation();jumpTo('${m.replyTo.id}')"><b>${esc(m.replyTo.who)}</b>${esc(m.replyTo.t)}</div>` : '';
+    if (m.type === 'card') body = cardHTML(m, room);
+    else if (m.type === 'output') body = `<div class="filec" onclick="${open}">${fileIc(m.output.title + '.pdf')}<div><b>${esc(m.output.title)}</b><small>Shared result · report + AI summary only</small></div></div>`;
+    else if (m.type === 'file') body = `<div class="filec" onclick="${open}">${fileIc(m.file.name)}<div style="flex:1"><b>${esc(m.file.name)}</b><small>${esc(m.file.size)}</small></div><span style="color:var(--blue)">${icon('download', 18)}</span></div>`;
+    else body = `<div class="bub" onclick="${open}">${q}${esc(m.t)}</div>`;
+  }
+  const rx = (!m.deleted && m.rx && Object.keys(m.rx).length) ? `<div class="rx">${Object.keys(m.rx).map(e => `<span class="${m.myrx === e ? 'mine' : ''}" onclick="event.stopPropagation();react('${room}','${m.id}','${e}')">${e} ${m.rx[e]}</span>`).join('')}</div>` : '';
+  const grp = group && !m.me && m.from;
+  const who = grp ? `<div class="who"><b>${esc(m.from)}</b> ${dayLabel(m.ts)} ${fmtTime(m.ts)}</div>` : '';
+  const time = grp ? '' : `<div class="mt">${fmtTime(m.ts)} ${room === 'chat' ? tickHTML(m) : ''}</div>`;
+  const cta = m.cta ? `<div style="margin-top:6px"><button class="chip" onclick="askOrchAbout()">Ask Orchestrator to change my workflow</button></div>` : '';
+  return `<div class="msg ${cls}" data-mid="${m.id}">${who}${body}${rx}${time}${cta}</div>`;
+}
+function renderMsgs(list, room, group) { let last = '', h = ''; list.forEach(m => { const k = dayKey(m.ts); if (k !== last && !m.sys) { h += `<div class="dsep"><span>${dayLabel(m.ts)}</span></div>`; last = k; } h += msgHTML(m, room, group); }); return h; }
+const TYPING = '<div class="typing"><i></i><i></i><i></i></div>';
+function jumpTo(id) { const el = $(`#chBody .msg[data-mid="${id}"], #agBody .msg[data-mid="${id}"]`); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }
+
+function openChat(id, msgId) { curChat = chatById(id); curChat.unread = 0; clearReply(); renderChat(); openPage('chat'); refreshLists(); if (msgId) setTimeout(() => jumpTo(msgId), 320); }
+function renderChat() {
+  const c = curChat; if (!c) return; const g = c.kind === 'group', typ = typingIn === c.id;
+  $('#chAv').innerHTML = g ? groupAv('sm') : personAv(c.name, 'sm', c.online); $('#chName').textContent = c.name;
+  $('#chSub').innerHTML = g ? `${c.members.length + 1} members${typ ? ' · <span style="color:var(--blue)">typing…</span>' : ''}` : (typ ? '<span style="color:var(--blue)">typing…</span>' : (c.online ? '<span style="color:var(--green)">● Online</span>' : esc(c.seen)));
+  const body = $('#chBody'); body.innerHTML = (c.messages.length ? renderMsgs(c.messages, 'chat', g) : `<div class="hint center" style="margin-top:50px">No messages yet — say hi 👋</div>`) + (typ ? TYPING : ''); body.scrollTop = body.scrollHeight;
+}
+const REPLIES = ['Noted 👍', 'Thanks!', 'Okay, got it', 'Will check 🙌', 'Sounds good'];
+function sendChat(extra) {
+  const c = curChat, inp = $('#chInput'); let m;
+  if (extra) m = mk(true, '', extra); else { const t = inp.value.trim(); if (!t) return; m = mk(true, t); inp.value = ''; }
+  attachReply(m, 'chat'); c.messages.push(m); renderChat(); refreshLists(); const id = c.id;
+  setTimeout(() => { m.status = 'delivered'; if (curChat && curChat.id === id) renderChat(); }, 500);
+  setTimeout(() => { typingIn = id; if (curChat && curChat.id === id) renderChat(); }, 900);
+  setTimeout(() => {
+    typingIn = null; m.status = 'read';
+    const who = c.kind === 'group' && c.members.length ? personById(c.members[Math.floor(Math.random() * c.members.length)]) : null;
+    c.messages.push(mk(false, extra ? 'Received, thanks! 🙏' : REPLIES[Math.floor(Math.random() * REPLIES.length)], who ? { from: who.name } : {}));
+    if (!(curChat && curChat.id === id && $('#pg-chat').classList.contains('open'))) c.unread = (c.unread || 0) + 1;
+    if (curChat && curChat.id === id) renderChat(); refreshLists();
+  }, 2300);
+}
+function openAgentChat(id) { curAgent = agentById(id); clearReply(); renderAgentChat(); openPage('agentchat'); }
+function renderAgentChat() {
+  const a = curAgent; if (!a) return; $('#agAv').innerHTML = agentAv(a, 'sm'); $('#agName').textContent = a.name;
+  const typ = typingIn === a.id, [c, l] = AGENT_STATE[a.state] || ['idle', 'Idle'];
+  $('#agSub').innerHTML = typ ? '<span style="color:var(--blue)">typing…</span>' : `<span style="color:${c === 'idle' ? 'var(--faint)' : c === 'warn' ? 'var(--amber)' : c === 'appr' ? 'var(--purple)' : 'var(--green)'}">● ${l}</span> · AI Agent`;
+  let h = `<div class="scope ${scopeOpen ? 'open' : ''}"><div class="top" onclick="scopeOpen=!scopeOpen;renderAgentChat()">${icon('lock', 15)}<span style="flex:1">Workflow set by Orchestrator · ${a.workflow.length} steps</span>${icon('chev', 14)}</div><ul>${a.workflow.map(s => `<li>${esc(s)}</li>`).join('')}</ul><span class="lk" onclick="askOrchAbout()">Change workflow → ask Orchestrator</span></div>`;
+  h += renderMsgs(a.messages, 'agent', false);
+  if (a.approval) h += `<div class="apprc"><div class="tg">${icon('lock', 15)} Approval required</div><div style="font-size:14px">Marketing Agent wants to publish an update for Campaign Alpha.</div><div class="btnrow" style="margin-top:10px"><button class="btn sm" onclick="openSheet('apprSheet')">Review</button><button class="btn primary sm" onclick="apprDecide(true)">Approve</button></div></div>`;
+  if (typ) h += TYPING; const body = $('#agBody'); body.innerHTML = h; body.scrollTop = body.scrollHeight;
+}
+function agentReply(a, text) {
+  const l = text.toLowerCase(); if (/status|progress|update|kabar/.test(l)) return { t: 'Current status: ' + a.activity + '.' };
+  const words = l.split(/[^a-z0-9]+/).filter(w => w.length > 3); let hit = null;
+  a.workflow.forEach(s => { const sl = s.toLowerCase(); words.forEach(w => { if (!hit && sl.includes(w)) hit = s; }); });
+  if (hit) return { t: `On it — that is part of my workflow ("${hit}"). I will report back here when it is done.`, hit };
+  return { t: "That is outside my workflow, so I can't do it. I can only: " + a.workflow.join('; ') + '. To change what I do, ask the Orchestrator.', cta: true };
+}
+function connectorReply(hit) {
+  const cal = /calendar/i.test(hit), cx = CONNECTORS.find(c => c.id === (cal ? 'google_calendar' : 'gmail'));
+  if (!cx.on) return { t: `I can't reach your ${cal ? 'calendar' : 'inbox'} right now (${cx.name} is not connected for this account). Connect it under More → Connectors, then ask me again.` };
+  return { card: cal ? { title: 'Upcoming calendar events', insights: ['Design review — 10:00', 'Dentist — tomorrow', 'Team sync — Fri 09:00'] } : { title: 'Unread emails', insights: ['Quarterly numbers — Finance', 'Re: Meeting — Alex Johnson'] } };
+}
+function sendAgent(extra) {
+  const a = curAgent, inp = $('#agInput'); let m, text;
+  if (extra) { m = mk(true, '', extra); text = extra.file ? extra.file.name : extra.output.title; } else { text = inp.value.trim(); if (!text) return; m = mk(true, text); inp.value = ''; }
+  delete m.status; attachReply(m, 'agent'); a.messages.push(m); renderAgentChat(); refreshLists(); const id = a.id;
+  setTimeout(() => { typingIn = id; if (curAgent && curAgent.id === id) renderAgentChat(); }, 300);
+  setTimeout(() => {
+    typingIn = null; const ag = agentById(id), r = agentReply(ag, text);
+    if (r.hit && /calendar|email/i.test(r.hit)) { const cr = connectorReply(r.hit); ag.messages.push(cr.card ? mk(false, '', { type: 'card', card: cr.card }) : mk(false, cr.t)); }
+    else {
+      ag.messages.push(mk(false, r.t, { cta: r.cta }));
+      if (r.hit) setTimeout(() => { ag.messages.push(mk(false, '', { type: 'card', card: { title: 'Task update — ' + r.hit, metrics: [['Workflow step', 'Completed'], ['Saved to', 'Vault']], insights: ['Result stored in your Personal Vault', 'Nothing outside my workflow was touched'] } })); if (curAgent && curAgent.id === id) renderAgentChat(); refreshLists(); }, 1500);
+    }
+    if (curAgent && curAgent.id === id) renderAgentChat(); refreshLists();
+  }, 1100);
+}
+function askOrchAbout() { const a = curAgent; closeSheets(); openOrch('Update workflow of ' + a.name + ': '); }
+function openAgentInfo() { const a = curAgent; $('#msgSheet').innerHTML = `<div class="handle"></div><div class="center" style="margin-bottom:12px"><div class="cen">${agentAv(a, 'lg')}</div><h3 style="margin-top:10px">${esc(a.name)}</h3><div class="hint">${esc(a.role)}</div></div><div class="lbl faint">Workflow defined by Orchestrator</div><div class="cardlist">${a.workflow.map((s, i) => `<div class="row" style="cursor:default"><span class="pill gray">${i + 1}</span><div class="grow nm" style="font-weight:600;font-size:14px">${esc(s)}</div></div>`).join('')}</div><button class="btn block" style="margin-top:14px" onclick="askOrchAbout()">Change workflow</button>`; openSheet('msgSheet'); }
+
+function attachReply(m, room) { if (reply && reply.room === room) { m.replyTo = { id: reply.id, who: reply.who, t: reply.t }; clearReply(); } }
+function showReply() { [['chat', 'chReply'], ['agent', 'agReply']].forEach(([r, id]) => { const b = $('#' + id); if (reply && reply.room === r) { b.classList.add('show'); b.innerHTML = `<div class="q"><b>Replying to ${esc(reply.who)}</b>${esc(reply.t)}</div><span onclick="clearReply()" style="cursor:pointer;padding:4px">${icon('x', 16)}</span>`; } else { b.classList.remove('show'); b.innerHTML = ''; } }); }
+function clearReply() { reply = null; showReply(); }
+function startReply() { const m = findMsg(actRoom, actId); if (!m) return; reply = { room: actRoom, id: m.id, who: m.me ? 'You' : (m.from || (actRoom === 'chat' ? curChat.name : curAgent.name)), t: snippetOf(m) }; showReply(); closeSheets(); $(actRoom === 'chat' ? '#chInput' : '#agInput').focus(); }
+function openMsg(room, id) {
+  const m = findMsg(room, id); if (!m || m.deleted) return; actRoom = room; actId = id;
+  const info = 'Sent ' + fmtTime(m.ts) + (m.me && m.status && room === 'chat' ? ' · ' + ({ read: 'Read', delivered: 'Delivered', sent: 'Sent' })[m.status] : '');
+  const row = (t, ic, fn, sub) => `<div class="setrow" onclick="${fn}"><div class="ic">${icon(ic, 18)}</div><div class="grow"><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</div></div>`;
+  let rows = row('Reply', 'chat', 'startReply()');
+  if (!m.type && m.t) rows += row('Copy text', 'copy', 'copyText(findMsg(actRoom,actId).t);closeSheets()');
+  if (m.type) rows += row('Save to Vault', 'shield', 'saveMsg(actRoom,actId);closeSheets()', 'Only this item — never workflow data');
+  rows += row('Message info', 'help', `toast('${info}');closeSheets()`, info);
+  if (m.me) rows += `<div class="setrow danger" onclick="deleteMsg()"><div class="ic">${icon('trash', 18)}</div><div class="grow"><b>Delete message</b></div></div>`;
+  $('#msgSheet').innerHTML = `<div class="handle"></div><div style="display:flex;justify-content:space-around;margin:0 0 8px">${['👍', '❤️', '😂', '🙏', '✅'].map(e => `<span style="font-size:26px;cursor:pointer;padding:5px 9px;background:var(--soft);border-radius:14px" onclick="react('${room}','${id}','${e}');closeSheets()">${e}</span>`).join('')}</div>${rows}`; openSheet('msgSheet');
+}
+function copyText(t) { try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(() => toast('Copied'), () => fbCopy(t)); return; } } catch (e) {} fbCopy(t); }
+function fbCopy(t) { try { const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied'); } catch (e) { toast('Copy is not available in this preview'); } }
+function rerender(room) { room === 'chat' ? renderChat() : renderAgentChat(); refreshLists(); }
+function react(room, id, e) { const m = findMsg(room, id); if (!m) return; m.rx = m.rx || {}; if (m.myrx === e) { m.rx[e]--; if (m.rx[e] <= 0) delete m.rx[e]; m.myrx = null; } else { if (m.myrx) { m.rx[m.myrx]--; if (m.rx[m.myrx] <= 0) delete m.rx[m.myrx]; } m.rx[e] = (m.rx[e] || 0) + 1; m.myrx = e; } rerender(room); }
+function deleteMsg() { const m = findMsg(actRoom, actId); if (!m) return; m.deleted = true; m.rx = null; closeSheets(); rerender(actRoom); toast('Message deleted'); }
+function saveMsg(room, id) { const m = findMsg(room, id); if (m) { m.saved = true; rerender(room); toast('Saved to Vault'); } }
+function openAttach(room) {
+  attachRoom = room;
+  $('#attachSheet').innerHTML = `<div class="handle"></div><h3 style="margin-bottom:6px">Attach</h3>` + [['File', 'file', "attachPick('file')", 'Campaign-Report.pdf · 2.4 MB (sample)'], ['Photo', 'image', "attachPick('photo')", 'IMG_2041.jpg · 1.1 MB (sample)'], ...OUTPUTS.slice(0, 2).map(o => [o.name, 'shield', `attachPick('${o.id}')`, 'From Vault · shares the result only'])].map(([t, ic, fn, sub]) => `<div class="setrow" onclick="${fn}"><div class="ic">${icon(ic, 18)}</div><div class="grow"><b>${esc(t)}</b><small>${sub}</small></div></div>`).join('');
+  openSheet('attachSheet');
+}
+function attachPick(k) {
+  closeSheets(); let x;
+  if (k === 'file') x = { type: 'file', file: { name: 'Campaign-Report.pdf', size: '2.4 MB' } }; else if (k === 'photo') x = { type: 'file', file: { name: 'IMG_2041.jpg', size: '1.1 MB' } };
+  else x = { type: 'output', output: { title: OUTPUTS.find(o => o.id === k).name.replace(/\.[a-z]+$/, '') } };
+  attachRoom === 'chat' ? sendChat(x) : sendAgent(x);
+}
+
+const addChat = c => { CHATS.push(c); (c.kind === 'group' ? GROUPS : PEOPLE).push(c); };
+const removeChat = id => { [CHATS, GROUPS, PEOPLE].forEach(a => { const i = a.findIndex(c => c.id === id); if (i > -1) a.splice(i, 1); }); };
+const lastTs = o => o.messages.length ? o.messages[o.messages.length - 1].ts : 0;
+const chev = () => `<span class="chev">${icon('chev', 18)}</span>`;
+function formSheet(title, fields, okLabel, onOk) {
+  $('#noteSheet').innerHTML = `<div class="handle"></div><h3 style="margin-bottom:12px">${esc(title)}</h3>${fields.map(f => `<div class="field"><label>${esc(f.label)}</label><div class="in ${f.ta ? 'ta' : ''}">${f.ta ? `<textarea id="ff_${f.id}">${esc(f.value || '')}</textarea>` : `<input id="ff_${f.id}" value="${esc(f.value || '')}">`}</div></div>`).join('')}<div class="btnrow"><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="window._formOk()">${okLabel}</button></div>`;
+  window._formOk = () => { const v = {}; fields.forEach(f => v[f.id] = $('#ff_' + f.id).value.trim()); if (onOk(v) !== false) closeSheets(); };
+  openSheet('noteSheet');
+}
+let msgFilter = 'all';
+function renderMessages() {
+  $('#msgChips').innerHTML = [['all', 'All'], ['people', 'People'], ['agents', 'Agents'], ['groups', 'Groups']].map(([k, l]) => `<button class="chip ${msgFilter === k ? 'on' : ''}" onclick="msgFilter='${k}';renderMessages()">${l}</button>`).join('');
+  const items = [];
+  if (msgFilter === 'all' || msgFilter === 'people') PEOPLE.filter(p => p.messages.length).forEach(p => items.push({ t: 'chat', o: p }));
+  if (msgFilter === 'all' || msgFilter === 'groups') GROUPS.forEach(g => items.push({ t: 'chat', o: g }));
+  if (msgFilter === 'all' || msgFilter === 'agents') AGENTS.filter(a => a.messages.length).forEach(a => items.push({ t: 'agent', o: a }));
+  items.sort((a, b) => ((b.o.pinned ? 1 : 0) - (a.o.pinned ? 1 : 0)) || lastTs(b.o) - lastTs(a.o));
+  let h = '';
+  if (msgFilter === 'all' || msgFilter === 'agents') h += `<div class="row" onclick="openOrch()">${orchAv()}<div class="grow"><div class="nm">Orchestrator</div><div class="sb">Direct your agents. Turn ideas into action.</div><div class="st"><i></i>Active</div></div></div>`;
+  h += items.map(({ t, o }) => {
+    const last = o.messages[o.messages.length - 1], isA = t === 'agent', g = o.kind === 'group';
+    const pre = !last ? '' : (last.me ? 'You: ' : (g && last.from ? last.from + ': ' : '')) + snippetOf(last);
+    const av = isA ? agentAv(o) : g ? groupAv() : personAv(o.name, '', o.online), ub = o.unread ? `<span class="ub">${o.unread}</span>` : '';
+    return `<div class="row" onclick="${isA ? `openAgentChat('${o.id}')` : `openChat('${o.id}')`}">${av}<div class="grow"><div class="nm">${esc(o.name)}${o.pinned ? icon('pin', 13, 'style="color:var(--faint)"') : ''}${o.muted ? '<span style="font-size:12px">🔕</span>' : ''}<span class="tm">${last ? listTime(last.ts) : ''}</span></div><div class="sb" style="display:flex;gap:6px;align-items:center"><span style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(pre)}</span>${ub}</div>${isA ? agentStatusHTML(o) : ''}</div></div>`;
+  }).join('');
+  if (!items.length && msgFilter !== 'all' && msgFilter !== 'agents') h += `<div class="hint center" style="margin-top:40px">No conversations here yet.</div>`;
+  $('#chatList').innerHTML = h; updateBadges();
+}
+function updateBadges() { const u = CHATS.reduce((n, c) => n + (c.unread || 0), 0), a = AGENTS.filter(x => x.approval).length, mb = $('#msgBadge'), ab = $('#agBadge'); mb.style.display = u ? 'flex' : 'none'; mb.textContent = u; ab.style.display = a ? 'flex' : 'none'; ab.textContent = a; }
+
+let ctFilter = 'all';
+function renderContactsPage() {
+  $('#ctChips').innerHTML = [['all', 'All'], ['people', 'People'], ['groups', 'Groups'], ['agents', 'Agents']].map(([k, l]) => `<button class="chip ${ctFilter === k ? 'on' : ''}" onclick="ctFilter='${k}';renderContactsPage()">${l}</button>`).join('');
+  const q = ($('#ctSearch').value || '').toLowerCase(), match = n => !q || n.toLowerCase().includes(q); let h = '';
+  if (ctFilter === 'all' || ctFilter === 'people') PEOPLE.filter(p => match(p.name)).forEach(p => { const l = p.messages[p.messages.length - 1]; h += `<div class="row" onclick="openChat('${p.id}')">${personAv(p.name, '', p.online)}<div class="grow"><div class="nm">${esc(p.name)}</div><div class="sb">${esc(p.seen)}${l ? ' · ' + esc(snippetOf(l)) : ''}</div></div>${chev()}</div>`; });
+  if (ctFilter === 'all' || ctFilter === 'groups') GROUPS.filter(g => match(g.name)).forEach(g => { h += `<div class="row" onclick="openChat('${g.id}')">${groupAv()}<div class="grow"><div class="nm">${esc(g.name)}</div><div class="sb">${g.members.length + 1} members · <span style="color:var(--green)">Active</span></div></div>${chev()}</div>`; });
+  if (ctFilter === 'all' || ctFilter === 'agents') AGENTS.filter(a => match(a.name)).forEach(a => { h += `<div class="row" onclick="openAgentChat('${a.id}')">${agentAv(a)}<div class="grow"><div class="nm">${esc(a.name)}</div>${agentStatusHTML(a)}</div>${chev()}</div>`; });
+  $('#ctBody').innerHTML = `<div class="lbl" style="margin:4px 18px 4px">Recent</div>` + (h || `<div class="hint center" style="margin-top:30px">Nothing matches.</div>`);
+}
+let acEdit = false;
+function acTab(v) { $$('#acSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('#acPeople').style.display = v === 'people' ? '' : 'none'; $('#acAgent').style.display = v === 'agent' ? '' : 'none'; }
+function openAddContact(edit) {
+  acEdit = !!edit; const c = edit ? curChat : { name: '', info: '', group: '' };
+  $('#acTitle').textContent = edit ? 'Edit Contact' : 'Create New Contact'; $('#acSeg').style.display = edit ? 'none' : ''; acTab('people');
+  $('#acName').value = c.name; $('#acInfo').value = c.info;
+  $('#acGroup').innerHTML = `<option value="">Select group</option>` + ['Family', 'Work', 'Clients', ...GROUPS.map(g => g.name)].filter((v, i, a) => a.indexOf(v) === i).map(g => `<option ${c.group === g ? 'selected' : ''}>${esc(g)}</option>`).join('');
+  $('#fName').classList.remove('bad'); $('#fInfo').classList.remove('bad'); openPage('addcontact');
+}
+function saveContact() {
+  const name = $('#acName').value.trim(), info = $('#acInfo').value.trim(), group = $('#acGroup').value;
+  $('#fName').classList.toggle('bad', !name); $('#fInfo').classList.toggle('bad', !info); if (!name || !info) return;
+  if (acEdit) { Object.assign(curChat, { name, info, group }); renderChat(); closePage('addcontact'); renderSettings(); toast('Contact updated'); refreshLists(); return; }
+  const c = { id: 'p' + NOW(), kind: 'person', name, info, group, online: false, pinned: false, muted: false, unread: 0, seen: 'New contact', messages: [] };
+  addChat(c); const g = GROUPS.find(x => x.name === group); if (g) g.members.push(c.id);
+  closePage('addcontact'); toast('Contact saved'); renderContactsPage(); refreshLists(); setTimeout(() => openChat(c.id), 250);
+}
+function renderNewChat() {
+  const q = ($('#ncSearch').value || '').toLowerCase(), m = n => !q || n.toLowerCase().includes(q); let h = `<div class="lbl" style="margin:2px 18px 4px">Suggested</div>`;
+  if (!q) h += `<div class="row" onclick="closePage('newchat');openPage('creategroup')"><div class="av" style="background:#E5EEFF;color:#2F7BF5">${icon('users', 22)}</div><div class="grow"><div class="nm">New group</div><div class="sb">Chat with several contacts at once</div></div>${chev()}</div><div class="row" onclick="closePage('newchat');openOrch()">${orchAv()}<div class="grow"><div class="nm">Orchestrator</div><div class="sb">Create agents, run tasks, define workflows</div></div>${chev()}</div>`;
+  const ags = AGENTS.filter(a => m(a.name));
+  if (ags.length) h += `<div class="lbl" style="margin:12px 18px 6px">INDIE Agents</div><div style="margin:0 18px" class="cardlist">${ags.map(a => `<div class="row" onclick="closePage('newchat');openAgentChat('${a.id}')">${agentAv(a)}<div class="grow"><div class="nm">${esc(a.name)}</div><div class="sb">${esc(agentStyle(a).tag)}</div></div>${chev()}</div>`).join('')}</div>`;
+  const ps = PEOPLE.filter(p => m(p.name));
+  if (ps.length) h += `<div class="lbl" style="margin:14px 18px 4px">Contacts</div>${ps.map(p => `<div class="row" onclick="closePage('newchat');openChat('${p.id}')">${personAv(p.name, '', p.online)}<div class="grow"><div class="nm">${esc(p.name)}</div><div class="sb">${esc(p.seen)}</div></div></div>`).join('')}`;
+  $('#ncBody').innerHTML = h;
+}
+let sqChip = 'messages';
+function renderSearch() {
+  $('#sqChips').innerHTML = [['messages', 'Messages'], ['contacts', 'Contacts'], ['groups', 'Groups'], ['agents', 'Agents']].map(([k, l]) => `<button class="chip ${sqChip === k ? 'on' : ''}" onclick="sqChip='${k}';renderSearch()">${l}</button>`).join('');
+  const q = ($('#sqInput').value || '').trim().toLowerCase(); let h = '';
+  const roomAv = (o, t) => t === 'agent' ? agentAv(o) : o.kind === 'group' ? groupAv() : personAv(o.name, '', o.online), open = (o, t, m) => t === 'agent' ? `openAgentChat('${o.id}')` : `openChat('${o.id}'${m ? `,'${m}'` : ''})`;
+  const all = [...PEOPLE.map(o => ({ o, t: 'chat' })), ...GROUPS.map(o => ({ o, t: 'chat' })), ...AGENTS.map(o => ({ o, t: 'agent' }))];
+  if (!q) h = `<div class="lbl" style="margin:4px 18px 4px">Recent</div>` + all.filter(x => x.o.messages.length).sort((a, b) => lastTs(b.o) - lastTs(a.o)).slice(0, 7).map(({ o, t }) => { const l = o.messages[o.messages.length - 1]; return `<div class="row" onclick="${open(o, t)}">${roomAv(o, t)}<div class="grow"><div class="nm">${esc(o.name)}<span class="tm">${listTime(l.ts)}</span></div><div class="sb">${l.me ? 'You: ' : ''}${esc(snippetOf(l))}</div></div></div>`; }).join('');
+  else if (sqChip === 'messages') {
+    const res = []; all.forEach(({ o, t }) => o.messages.forEach(m => { if (!m.deleted && !m.sys && snippetOf(m).toLowerCase().includes(q)) res.push({ o, t, m }); })); res.sort((a, b) => b.m.ts - a.m.ts);
+    h = `<div class="lbl" style="margin:4px 18px 4px">${res.length} result${res.length === 1 ? '' : 's'}</div>` + res.slice(0, 30).map(({ o, t, m }) => `<div class="row" onclick="${open(o, t, m.id)}">${roomAv(o, t)}<div class="grow"><div class="nm">${esc(o.name)}<span class="tm">${listTime(m.ts)}</span></div><div class="sb">${esc(snippetOf(m))}</div></div></div>`).join('');
+  } else {
+    const src = sqChip === 'contacts' ? PEOPLE.map(o => ({ o, t: 'chat' })) : sqChip === 'groups' ? GROUPS.map(o => ({ o, t: 'chat' })) : AGENTS.map(o => ({ o, t: 'agent' }));
+    h = src.filter(({ o }) => o.name.toLowerCase().includes(q)).map(({ o, t }) => `<div class="row" onclick="${open(o, t)}">${roomAv(o, t)}<div class="grow"><div class="nm">${esc(o.name)}</div><div class="sb">${t === 'agent' ? esc(agentStyle(o).tag) : o.kind === 'group' ? o.members.length + 1 + ' members' : esc(o.seen)}</div></div></div>`).join('');
+  }
+  $('#sqBody').innerHTML = h || `<div class="hint center" style="margin-top:40px">No results for “${esc(q)}”.</div>`;
+}
+let agTab = 'mine';
+function agentTab(v) { agTab = v; renderAgentCenter(); }
+function renderAgentCenter() {
+  $$('#agentSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === agTab));
+  if (agTab === 'mine') $('#agentsBody').innerHTML = AGENTS.map(a => `<div class="row" onclick="openAgentChat('${a.id}')">${agentAv(a)}<div class="grow"><div class="nm">${esc(a.name)}</div>${agentStatusHTML(a).replace('</div>', ` · <span style="color:var(--text2);font-weight:500">${esc(agentStyle(a).tag)}</span></div>`)}</div>${chev()}</div>`).join('') + `<div style="padding:12px 18px"><button class="btn block" onclick="openOrch('Create an agent to ')">${icon('sparkle', 16)}&nbsp; Create an agent with the Orchestrator</button></div>`;
+  else $('#agentsBody').innerHTML = `<div style="padding:0 18px"><p class="hint">Templates start a conversation with the Orchestrator, which builds the agent and defines its workflow.</p></div>` + TEMPLATES.map(t => { const have = AGENTS.some(a => a.name === t.name); return `<div class="row" style="cursor:default">${agentAv({ name: t.name })}<div class="grow"><div class="nm">${esc(t.name)}</div><div class="sb">${esc(agentStyle({ name: t.name }).tag)}</div></div>${have ? '<span class="pill gray">Added</span>' : `<button class="btn sm primary" onclick="openOrch('Create an agent to ${esc(t.desc)}')">Create</button>`}</div>`; }).join('');
+}
+let vTab = 'files';
+function vaultTab(v) { vTab = v; renderVault(); }
+const fileWhen = ts => (dayLabel(ts) === 'Today' || dayLabel(ts) === 'Yesterday') ? dayLabel(ts) + ', ' + fmtTime(ts) : Math.max(2, Math.round((NOW() - ts) / 864e5)) + ' days ago';
+function renderVault() {
+  $$('#vaultChips .chip').forEach(b => b.classList.toggle('on', b.dataset.v === vTab)); let h = '';
+  if (vTab === 'files') h = OUTPUTS.map(o => `<div class="row frow" onclick="openOutput('${o.id}')">${fileIc(o.name)}<div class="grow"><div class="nm">${esc(o.name)}</div><div class="sb">${esc(o.kind)} · ${fileWhen(o.ts)}${o.shared ? ' · shared' : ''}</div></div>${chev()}</div>`).join('');
+  else if (vTab === 'notes') h = `<div style="padding:0 18px 8px"><button class="btn sm ghost" onclick="addNote()">${icon('plus', 15)}&nbsp; Add note</button></div>` + (NOTES.map(n => `<div class="row" style="cursor:default"><div class="fic" style="background:#60A5FA;width:42px;height:42px;border-radius:12px">${icon('note', 19, 'stroke="#fff"')}</div><div class="grow"><div class="nm">${esc(n.title)}</div><div class="sb">${esc(n.text)}</div></div><button class="ibtn" onclick="NOTES.splice(NOTES.findIndex(x=>x.id==='${n.id}'),1);renderVault();toast('Note deleted')">${icon('trash', 17)}</button></div>`).join('') || `<div class="hint center" style="margin-top:30px">No notes yet.</div>`);
+  else h = MEMORIES.map(m => { const a = agentById(m.agent); return `<div class="row" style="cursor:default">${agentAv(a, 'sm')}<div class="grow"><div class="nm" style="font-size:14px;font-weight:600">${esc(m.note)}</div><div class="sb">${esc(a.name)}</div></div></div>`; }).join('');
+  $('#vaultBody').innerHTML = h;
+}
+function addNote() { formSheet('New note', [{ id: 'title', label: 'Title' }, { id: 'text', label: 'Note', ta: true }], 'Save', v => { if (!v.title) { toast('Add a title first'); return false; } NOTES.unshift({ id: 'n' + NOW(), title: v.title, text: v.text, ts: NOW() }); renderVault(); toast('Note saved'); }); }
+function openOutputByName(n) { openOutput((OUTPUTS.find(x => x.name === n) || OUTPUTS[0]).id); }
+function openOutput(id) {
+  const o = OUTPUTS.find(x => x.id === id); $('#opTitle').textContent = o.name;
+  $('#opBody').innerHTML = `<div class="card" style="padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:14px">${fileIc(o.name)}<div><b style="font-size:15px">${esc(o.name)}</b><div class="hint" style="margin:2px 0 0">${esc(o.kind)} · ${fileWhen(o.ts)}</div></div></div><div class="lbl">Summary</div><p class="hint" style="font-size:14px;color:var(--text)">${esc(o.summary)}</p><div class="lbl">AI Summary</div><p class="hint" style="font-size:14px">${esc(o.ai)}</p><div class="lbl">Raw data</div><p class="hint">${esc(o.raw)}</p>` + (o.activity.length ? `<div class="lbl">Agent activity</div><ul class="hint" style="padding-left:18px;line-height:1.7">${o.activity.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : '') + `<button class="btn primary block" style="margin-top:12px" onclick="openShare('${o.id}')">Share result</button>`;
+  openPage('output');
+}
+let SH = null;
+function openShare(id) { SH = { id, fmt: 'PDF', to: null, inc: { report: true, ai: true, raw: false, act: false } }; renderShare(); openSheet('shareSheet'); }
+function renderShare() {
+  const o = OUTPUTS.find(x => x.id === SH.id), to = SH.to ? chatById(SH.to) : null;
+  $('#shareSheet').innerHTML = `<div class="handle"></div><div class="center" style="margin-bottom:12px"><h3>Share Result</h3><div class="hint" style="margin:2px 0 0">Share the output, not your workflow.</div></div><div class="card" style="padding:12px;display:flex;gap:12px;align-items:center;margin-bottom:6px">${fileIc(o.name)}<div><b style="font-size:14px">${esc(o.name)}</b><div class="hint" style="margin:1px 0 0">${esc(o.kind)}</div></div></div>
+  <div class="lbl">Share as</div><div class="cardlist">${['PDF', 'Link', 'Message', 'File'].map(f => `<div class="row" style="${SH.fmt === f ? 'background:#EEF3FF' : ''}" onclick="SH.fmt='${f}';renderShare()"><span class="rd ${SH.fmt === f ? 'on' : ''}"></span><div class="grow nm" style="font-weight:600">${f}</div></div>`).join('')}</div>
+  <div class="lbl">Recipient</div><div class="card"><div class="row" onclick="pickRecipient()">${to ? (to.kind === 'group' ? groupAv('sm') : personAv(to.name, 'sm')) : `<div class="av sm" style="background:var(--soft);color:var(--faint)">${icon('user', 17)}</div>`}<div class="grow nm" style="font-weight:600">${to ? esc(to.name) : 'Choose recipient'}</div>${chev()}</div></div>
+  <div class="lbl">Data included</div>${[['report', 'Report'], ['ai', 'AI Summary'], ['raw', 'Raw Data'], ['act', 'Agent Activity']].map(([k, l]) => `<div style="display:flex;align-items:center;gap:11px;padding:7px 2px;cursor:pointer;font-size:14px" onclick="SH.inc.${k}=!SH.inc.${k};renderShare()"><span class="cb ${SH.inc[k] ? 'on' : ''}">${icon('check', 14)}</span>${l}</div>`).join('')}
+  <div class="hint" style="margin:8px 0 14px">The workflow definition, credentials and private memory are never included.</div><div class="btnrow"><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="doShare()">Share</button></div>`;
+}
+function pickRecipient() { $('#pickSheet').innerHTML = `<div class="handle"></div><h3 style="margin-bottom:8px">Recipient</h3>` + [...PEOPLE, ...GROUPS].map(c => `<div class="row" style="padding-left:2px;padding-right:2px" onclick="SH.to='${c.id}';renderShare();openSheet('shareSheet')">${c.kind === 'group' ? groupAv('sm') : personAv(c.name, 'sm')}<div class="grow nm" style="font-weight:600">${esc(c.name)}</div></div>`).join(''); openSheet('pickSheet'); }
+function doShare() {
+  if (!Object.values(SH.inc).some(Boolean)) { toast('Select at least one item to share'); return; }
+  const o = OUTPUTS.find(x => x.id === SH.id); o.shared = true;
+  if (SH.to) { const c = chatById(SH.to); c.messages.push(mk(true, '', { type: 'output', output: { title: o.name.replace(/\.[a-z]+$/, '') }, status: 'delivered' })); toast(`Shared with ${c.name} as ${SH.fmt}`); } else toast(`Shared as ${SH.fmt}`);
+  closeSheets(); refreshLists(); if (curTab === 'vault') renderVault();
+}
+function setRow(ic, t, s, fn) { return `<div class="row" style="padding:13px 14px" onclick="${fn}"><div class="setrow" style="padding:0;pointer-events:none;flex:1"><div class="ic">${icon(ic, 18)}</div><div class="grow"><b>${t}</b><small>${s}</small></div></div>${chev()}</div>`; }
+function renderProfile() {
+  $('#profileBody').innerHTML = `<div class="prof">${personAv(ME.name, 'lg', true)}<div style="flex:1"><div class="nm">${esc(ME.name)} <span style="cursor:pointer;color:var(--text2)" onclick="editName()">${icon('edit', 16)}</span></div><div class="on"><i></i>Online</div></div></div>
+  <div style="padding:0 18px"><div class="cardlist" style="margin-bottom:14px"><div class="kv"><div><small>Indie ID</small><b>${esc(ME.id)}</b></div><span style="color:var(--faint);cursor:pointer" onclick="copyText('${esc(ME.id)}')">${icon('copy', 18)}</span></div>
+  <div class="row" style="padding:13px 14px" onclick="toast('Email is not shared')"><div class="grow"><div class="sb" style="margin:0 0 2px">Email</div><div class="nm" style="font-weight:600;color:var(--text2)">Not shared</div></div>${chev()}</div>
+  <div class="row" style="padding:13px 14px" onclick="toast('Phone is not shared')"><div class="grow"><div class="sb" style="margin:0 0 2px">Phone</div><div class="nm" style="font-weight:600;color:var(--text2)">Not shared</div></div>${chev()}</div></div>
+  <div class="cardlist">${setRow('lock', 'Privacy & Security', 'Manage your data and permissions', "openPage('consent')")}${setRow('link', 'Connectors', 'External services and scoped access', "openPage('connectors')")}${setRow('sliders', 'Account Settings', 'Notification, appearance, language', "toast('Account settings are not part of this preview')")}${setRow('help', 'Help & Support', 'Get help or contact us', "toast('support@indie.id')")}</div>
+  <button class="btn danger block" style="margin-top:16px" onclick="logout()">Log out</button></div>`;
+}
+function editName() { formSheet('Display name', [{ id: 'n', label: 'Name', value: ME.name }], 'Save', v => { if (!v.n) return false; ME.name = v.n; renderProfile(); toast('Name updated'); }); }
+function logout() { stack.splice(0).forEach(id => $('#pg-' + id).classList.remove('open')); openPage('welcome'); }
+function renderConsent() {
+  $('#cnBody').innerHTML = `<p class="hint">Every mandate is attributable to an agent and purpose. Pause or revoke at any time.</p>` + MANDATES.map(m => { const a = agentById(m.agent); return `<div class="card" style="padding:14px;margin-bottom:12px"><div style="display:flex;gap:11px;align-items:center">${agentAv(a, 'sm')}<div style="flex:1"><b>${esc(a.name)}</b><div class="hint" style="margin:1px 0 0">${esc(m.autonomy)}</div></div><span class="pill ${m.status === 'active' ? 'green' : m.status === 'paused' ? 'amber' : 'gray'}">${m.status[0].toUpperCase() + m.status.slice(1)}</span></div><p class="hint" style="margin:10px 0">${esc(m.purpose)}</p>${m.status === 'revoked' ? '' : `<div class="btnrow"><button class="btn sm" onclick="setMandate('${m.id}','${m.status === 'active' ? 'paused' : 'active'}')">${m.status === 'active' ? 'Pause' : 'Resume'}</button><button class="btn sm danger" onclick="setMandate('${m.id}','revoked')">Revoke</button></div>`}</div>`; }).join('');
+}
+function setMandate(id, s) { MANDATES.find(m => m.id === id).status = s; renderConsent(); toast('Mandate ' + s); }
+function renderConnectors() { $('#cxBody').innerHTML = `<p class="hint">External services are optional connectors, scoped and revocable. Approval always happens on the provider's own screen.</p><div class="cardlist">${CONNECTORS.map(c => `<div class="row" style="cursor:default"><div class="setrow" style="padding:0;flex:1"><div class="ic" style="${c.on ? 'background:#E3F6EA;color:var(--green)' : ''}">${icon(c.ic, 18)}</div><div class="grow"><b>${c.name}</b><small>${c.on ? 'Connected · ' : ''}${c.desc}</small></div></div><button class="btn sm ${c.on ? 'danger' : ''}" onclick="toggleConnector('${c.id}')">${c.on ? 'Disconnect' : 'Connect'}</button></div>`).join('')}</div>`; }
+function toggleConnector(id) { const c = CONNECTORS.find(x => x.id === id); c.on = !c.on; renderConnectors(); toast(c.on ? c.name + ' connected (simulated)' : c.name + ' disconnected'); }
+
+const ADJ = ['creative', 'digital', 'focus', 'bright', 'quiet', 'swift', 'calm', 'bold'], NOUN = ['mind', 'nomad', 'life', 'spark', 'river', 'pixel', 'orbit', 'ember'];
+const WORDLIST = 'ocean mirror bridge forest apple diamond winter melody rocket solar camera galaxy harbor velvet maple quartz signal timber lantern ripple ember cobalt drift fable grove meadow summit tundra violet willow zephyr anchor beacon canyon dolphin eclipse falcon glacier horizon island jasmine kettle lagoon marble nectar orchid prairie'.split(' ');
+let pendingId = '', phrase = [], phraseOK = false;
+const TAKEN = ['admin', 'indie', 'indie_user', 'clips', 'support'];
+function initCreateId() {
+  $('#idInput').value = ''; $('#pinInput').value = ''; $('#fId').classList.remove('bad', 'good'); $('#fPin').classList.remove('bad');
+  const sugs = []; while (sugs.length < 3) { const s = ADJ[Math.floor(Math.random() * 8)] + '_' + NOUN[Math.floor(Math.random() * 8)]; if (!sugs.includes(s)) sugs.push(s); }
+  $('#idSugs').innerHTML = sugs.map(s => `<div class="sug" onclick="$('#idInput').value='${s}';idCheck()"><span>${s}</span>${icon('copy', 17)}</div>`).join('');
+}
+function idCheck() {
+  const v = $('#idInput').value.trim().toLowerCase(), f = $('#fId'); f.classList.remove('bad', 'good'); if (!v) return false;
+  if (!/^[a-z0-9_.]{3,24}$/.test(v)) { $('#idErr').textContent = 'Use 3–24 letters, numbers, dots or underscores'; f.classList.add('bad'); return false; }
+  if (TAKEN.includes(v)) { $('#idErr').textContent = 'This ID is already taken'; f.classList.add('bad'); return false; }
+  f.classList.add('good'); return true;
+}
+function createIdNext() {
+  let ok = idCheck(); if (!$('#idInput').value.trim()) { $('#idErr').textContent = 'Choose an Indie ID first'; $('#fId').classList.add('bad'); ok = false; }
+  const pin = $('#pinInput').value; $('#fPin').classList.toggle('bad', pin.length < 6); if (!ok || pin.length < 6) return;
+  pendingId = $('#idInput').value.trim().toLowerCase(); phrase = [];
+  while (phrase.length < 12) { const w = WORDLIST[Math.floor(Math.random() * WORDLIST.length)]; if (!phrase.includes(w)) phrase.push(w); }
+  $('#wordGrid').innerHTML = phrase.map((w, i) => `<div><b>${i + 1}.</b>${w}</div>`).join(''); phraseOK = false; $('#phraseCb').classList.remove('on'); openPage('phrase');
+}
+function phraseToggle() { phraseOK = !phraseOK; $('#phraseCb').classList.toggle('on', phraseOK); }
+function phraseContinue() {
+  if (!phraseOK) { const r = $('#phraseRow'); r.style.color = 'var(--red)'; try { r.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 280 }); } catch (e) {} setTimeout(() => r.style.color = '', 900); return; }
+  ME.id = pendingId; enterApp(); toast('Welcome to Indie, ' + ME.id);
+}
+function enterApp() { ['phrase', 'createid', 'welcome'].forEach(closePage); go('msg'); }
+function signIn() { enterApp(); toast('Signed in (demo)'); }
+
+let armed = {};
+function confirmTwice(k, msg, fn) { if (!armed[k]) { armed[k] = true; toast(msg); setTimeout(() => armed[k] = false, 3000); return; } armed[k] = false; fn(); }
+function openSettings() { renderSettings(); openPage('settings'); }
+function renderSettings() {
+  const c = curChat; if (!c) return; const g = c.kind === 'group';
+  const sw = (on, fn) => `<span class="sw ${on ? 'on' : ''}" onclick="event.stopPropagation();${fn}"></span>`;
+  const row = (ic, t, s, fn, right) => `<div class="setrow" onclick="${fn}"><div class="ic">${icon(ic, 18)}</div><div class="grow"><b>${t}</b><small>${s}</small></div>${right || `<span class="chev">${icon('chev', 18)}</span>`}</div>`;
+  $('#stBody').innerHTML = `<div class="center" style="margin:4px 0 14px"><div class="cen">${g ? groupAv('lg') : personAv(c.name, 'lg')}</div><h3 style="margin-top:10px">${esc(c.name)}</h3><div class="hint" style="margin:0">${g ? c.members.length + 1 + ' members' : esc(c.info || c.seen)}</div></div>` +
+    (g ? row('user', 'Group Info', 'Name, description, icon', 'editGroupInfo()') + row('users', 'Members', 'View and manage members', 'openMembers()') : row('user', 'Contact Info', esc(c.info || 'Not shared'), 'openAddContact(true)')) +
+    row('bell', 'Notifications', g ? 'Message, mention, and call' : 'Mute message and call alerts', "togg('muted')", sw(c.muted, "togg('muted')")) + (g ? '' : row('pin', 'Pin chat', 'Keep at the top of Messages', "togg('pinned')", sw(c.pinned, "togg('pinned')"))) +
+    row('image', 'Media & Files', 'Shared media and documents', `toast('${c.messages.filter(m => m.type === 'file').length} files shared')`) + row('trash', 'Clear Chat History', 'Remove all messages', 'clearHistory()') +
+    `<div class="setrow danger" style="margin-top:10px" onclick="${g ? 'leaveGroup()' : 'deleteContact()'}"><div class="ic">${icon(g ? 'logout' : 'trash', 18)}</div><div class="grow"><b>${g ? 'Leave Group' : 'Delete Contact'}</b></div></div>`;
+}
+function togg(k) { curChat[k] = !curChat[k]; renderSettings(); refreshLists(); toast(k === 'muted' ? (curChat.muted ? 'Notifications muted' : 'Notifications on') : (curChat.pinned ? 'Chat pinned' : 'Chat unpinned')); }
+function clearHistory() { confirmTwice('clr', 'Tap "Clear Chat History" again to confirm', () => { curChat.messages = []; renderChat(); renderSettings(); refreshLists(); toast('Chat history cleared'); }); }
+function deleteContact() { confirmTwice('del', 'Tap "Delete Contact" again to confirm', () => { const id = curChat.id; GROUPS.forEach(g => g.members = g.members.filter(m => m !== id)); removeChat(id); closePage('settings'); closePage('chat'); refreshLists(); toast('Contact deleted'); }); }
+function leaveGroup() { confirmTwice('leave', 'Tap "Leave Group" again to confirm', () => { removeChat(curChat.id); closePage('settings'); closePage('chat'); refreshLists(); toast('You left the group'); }); }
+function editGroupInfo() { formSheet('Group info', [{ id: 'n', label: 'Group name', value: curChat.name }, { id: 'd', label: 'Description', value: curChat.desc, ta: true }], 'Save', v => { if (!v.n) return false; curChat.name = v.n; curChat.desc = v.d; renderChat(); renderSettings(); refreshLists(); toast('Group updated'); }); }
+function openMembers() {
+  const g = curChat; $('#membersSheet').innerHTML = `<div class="handle"></div><h3 style="margin-bottom:6px">Members · ${g.members.length + 1}</h3><div class="row" style="padding-left:2px;cursor:default">${personAv(ME.name, 'sm')}<div class="grow nm">${esc(ME.name)} <span class="pill gray">You</span></div></div>` + g.members.map(id => { const p = personById(id); return p ? `<div class="row" style="padding-left:2px;cursor:default">${personAv(p.name, 'sm', p.online)}<div class="grow"><div class="nm">${esc(p.name)}</div><div class="sb">${esc(p.info)}</div></div><button class="ibtn" onclick="removeMember('${id}')">${icon('x', 18)}</button></div>` : ''; }).join('') + `<button class="btn primary block" style="margin-top:12px" onclick="closeSheets();openInvite('add')">Invite more</button>`; openSheet('membersSheet');
+}
+function removeMember(id) { const g = curChat; g.members = g.members.filter(m => m !== id); g.messages.push(mk(false, `${(personById(id) || {}).name} was removed`, { sys: true })); renderChat(); renderSettings(); openMembers(); toast('Member removed'); }
+let GD = { members: [], vis: 'private' }, ivMode = 'create', ivSel = new Set();
+function initCreateGroup() { GD = { members: [], vis: 'private' }; $('#gName').value = ''; $('#gDesc').value = ''; $('#fGName').classList.remove('bad'); $('#gAllow').classList.add('on'); renderGroupDraft(); }
+function renderGroupDraft() {
+  $('#gMembers').innerHTML = GD.members.slice(0, 5).map(id => personAv(personById(id).name, 'sm')).join('') + `<button class="chip" style="display:flex;align-items:center;gap:5px;padding:7px 12px" onclick="openInvite('create')">${icon('plus', 14)} Add</button>`;
+  $('#gVis').innerHTML = [['public', 'globe', 'Public Group', 'Anyone with the link can join.'], ['private', 'lock', 'Private Group', 'Only invited members can join.']].map(([k, ic, t, s]) => `<div class="row" onclick="GD.vis='${k}';renderGroupDraft()" style="${GD.vis === k ? 'background:#EEF3FF' : ''}"><div class="setrow" style="padding:0;pointer-events:none;flex:1"><div class="ic">${icon(ic, 18)}</div><div class="grow"><b>${t}</b><small>${s}</small></div></div><span class="rd ${GD.vis === k ? 'on' : ''}"></span></div>`).join('');
+}
+function createGroup() {
+  const name = $('#gName').value.trim(); $('#fGName').classList.toggle('bad', !name); if (!name) return;
+  const g = { id: 'g' + NOW(), kind: 'group', name, desc: $('#gDesc').value.trim(), vis: GD.vis, allowNew: $('#gAllow').classList.contains('on'), members: [...GD.members], muted: false, pinned: false, unread: 0, messages: [mk(false, `You created “${name}”`, { sys: true })] };
+  addChat(g); closePage('creategroup'); refreshLists(); toast('Group created'); setTimeout(() => openChat(g.id), 250);
+}
+function openInvite(mode) { ivMode = mode; ivSel = new Set(mode === 'create' ? GD.members : []); $('#ivTitle').textContent = mode === 'create' ? 'Add Members' : 'Invite to Group'; $('#ivSearch').value = ''; renderInvite(); openPage('invite'); }
+function renderInvite() {
+  const q = ($('#ivSearch').value || '').toLowerCase(), have = ivMode === 'add' ? curChat.members : [];
+  $('#ivBody').innerHTML = PEOPLE.filter(p => !have.includes(p.id) && (!q || p.name.toLowerCase().includes(q))).map(p => `<div class="row" onclick="ivToggle('${p.id}')"><span class="cb ${ivSel.has(p.id) ? 'on' : ''}">${icon('check', 14)}</span>${personAv(p.name, '', p.online)}<div class="grow"><div class="nm">${esc(p.name)}</div><div class="sb">${esc(p.info)}</div></div></div>`).join('');
+  $('#ivCount').textContent = ivSel.size + ' selected'; $('#ivBtn').textContent = ivMode === 'create' ? 'Done' : 'Invite';
+}
+function ivToggle(id) { ivSel.has(id) ? ivSel.delete(id) : ivSel.add(id); renderInvite(); }
+function inviteDone() {
+  if (ivMode === 'create') { GD.members = [...ivSel]; back(); renderGroupDraft(); return; }
+  if (!ivSel.size) { toast('Select at least one contact'); return; }
+  const g = curChat, n = ivSel.size; [...ivSel].forEach(id => { g.members.push(id); g.messages.push(mk(false, `${personById(id).name} joined the group`, { sys: true })); });
+  back(); renderChat(); renderSettings(); refreshLists(); toast(n + ' member' + (n > 1 ? 's' : '') + ' invited');
+}
+
+let orchBusy = false, orchRun = 0, orchStarted = false;
+const ORCH_CHIPS = [['Create a report', 'file', 'Create an agent to report weekly campaign performance'], ['Plan my day', 'clock', 'Plan my day from my calendar and emails'], ['Analyze data', 'chart', 'Analyze my latest campaign performance'], ['Build a workflow', 'flow', 'Build a workflow to monitor my campaign every morning']];
+const oTag = () => `<div class="otag"><span class="mk">in</span>ORCHESTRATOR<time>${fmtTime(NOW())}</time></div>`;
+function oAdd(html) { const b = $('#orBody'); b.insertAdjacentHTML('beforeend', html); b.scrollTop = b.scrollHeight; return b.lastElementChild; }
+function openOrch(prefill) {
+  $('#orbChips').innerHTML = ORCH_CHIPS.map(([l, ic], i) => `<button onclick="orchChip(${i})">${icon(ic, 18)}${l}</button>`).join('');
+  $('#orbWrap').style.display = orchStarted ? 'none' : ''; $('#orBody').style.display = orchStarted ? '' : 'none'; openPage('orch');
+  if (typeof prefill === 'string') { const i = $('#orInput'); i.value = prefill; i.focus(); }
+}
+function orchChip(i) { $('#orInput').value = ORCH_CHIPS[i][2]; sendOrch(); }
+function startOrchThread() { if (orchStarted) return; orchStarted = true; $('#orbWrap').style.display = 'none'; $('#orBody').style.display = ''; oAdd(`<div class="omsg">${oTag()}<div>Hi! I define <b>what your agents do</b>. Create an agent, give me a task, or update an agent's workflow — agents only ever work inside the workflow I give them.</div></div>`); }
+function sendOrch() {
+  const inp = $('#orInput'), text = inp.value.trim(); if (!text) return;
+  if (orchBusy) { toast('Orchestrator is still working…'); return; }
+  inp.value = ''; startOrchThread();
+  oAdd(`<div class="msg me"><div class="bub" style="cursor:default">${esc(text)}</div><div class="mt">${fmtTime(NOW())} <span class="tk read">${icon('checks', 15)}</span></div></div>`);
+  const l = text.toLowerCase();
+  if (/\b(update|ubah|change|edit)\b[^.]*\bworkflow\b/.test(l)) updateWorkflowFlow(text);
+  else if (/\b(create|buat|bikin|make|add|tambah)\w*\b[^.]*\bagent\b/.test(l)) createAgentFlow(text); else taskFlow(text);
+}
+const STOP = { my: 1, the: 1, a: 1, an: 1, to: 1, saya: 1, ku: 1, untuk: 1, yang: 1, that: 1, of: 1, and: 1 };
+function deriveAgent(text) {
+  const m = text.match(/(?:\bto\b|\buntuk\b|\bthat\b|\byang\b)\s+(.+)$/i);
+  const topic = (m ? m[1] : text.replace(/.*\bagent\b/i, '')).replace(/[.!?]+$/, '').trim() || 'general tasks';
+  const words = topic.split(/\s+/).filter(w => w && !STOP[w.toLowerCase()]).slice(0, 2);
+  const name = (words.length ? words.map(w => w[0].toUpperCase() + w.slice(1)).join(' ') : 'Custom') + ' Agent';
+  const short = topic.length > 38 ? topic.slice(0, 38) + '…' : topic, l = topic.toLowerCase();
+  const obj = short.replace(/^(monitor|memantau|pantau|watch|track|summari[sz]e|meringkas|ringkas|report|melaporkan|research|find|search|mencari|cari)\s+(on\s+|for\s+)?/i, ''); let steps;
+  if (/monitor|pantau|memantau|watch|track/.test(l)) steps = [`Check ${obj} on a schedule`, 'Detect important changes', 'Notify you'];
+  else if (/summar|ringkas|meringkas/.test(l)) steps = [`Collect ${obj}`, 'Summarize key points', 'Save summary to Vault'];
+  else if (/report|laporan/.test(l)) steps = [`Gather data for ${obj}`, 'Generate report', 'Save report to Vault'];
+  else if (/research|cari|find|search/.test(l)) steps = ['Search public sources', 'Compare findings', 'Report results to you'];
+  else steps = ['Receive tasks from Orchestrator', 'Execute: ' + short, 'Report results to you'];
+  steps.push('Ask your approval before any external action');
+  return { name, role: short[0].toUpperCase() + short.slice(1), steps };
+}
+function makeAgent(d) { const a = { id: 'a' + NOW() + Math.floor(Math.random() * 99), name: d.name, role: d.role, state: 'ready', activity: 'Ready — waiting for tasks', workflow: d.steps, messages: [mk(false, `Hi! I'm ${d.name}. The Orchestrator set up my workflow — I will follow it exactly.`)] }; AGENTS.push(a); refreshLists(); return a; }
+const chatBtn = a => `<button class="btn sm" style="margin-top:8px" onclick="openAgentChat('${a.id}')">💬 Chat with ${esc(a.name)}</button>`;
+const olist = arr => `<ol>${arr.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`;
+function createAgentFlow(text) {
+  orchBusy = true; const t = oAdd('<div class="hint" style="margin:0 4px 10px">Orchestrator is defining the workflow…</div>');
+  setTimeout(() => {
+    t.remove(); const d = deriveAgent(text), dup = AGENTS.find(x => x.name.toLowerCase() === d.name.toLowerCase());
+    if (dup) oAdd(`<div class="omsg">${oTag()}<div>${esc(dup.name)} already exists. You can chat with it, or tell me how to change its workflow.</div>${chatBtn(dup)}</div>`);
+    else { const a = makeAgent(d); oAdd(`<div class="omsg">${oTag()}<div>✅ Created <b>${esc(a.name)}</b>. Workflow I defined:</div>${olist(a.workflow)}<div class="hint" style="margin:6px 0 0">You can now chat with it directly — it will only do these steps.</div>${chatBtn(a)}</div>`); }
+    orchBusy = false;
+  }, 1000);
+}
+function updateWorkflowFlow(text) {
+  const l = text.toLowerCase(), a = AGENTS.find(x => { const n = x.name.toLowerCase(); return l.includes(n) || l.includes(n.replace(' agent', '')); }), say = h => oAdd(`<div class="omsg">${oTag()}${h}</div>`);
+  if (!a) return say('<div>Which agent? Try: <i>Update workflow of Research Agent: compare prices</i>.</div>');
+  const i = text.indexOf(':'), step = (i > -1 ? text.slice(i + 1) : text).trim();
+  if (step.length < 3) return say(`<div>What should ${esc(a.name)} do? Add the new step after a colon.</div>`);
+  a.workflow.splice(Math.max(0, a.workflow.length - 1), 0, step[0].toUpperCase() + step.slice(1)); a.messages.push(mk(false, 'Orchestrator updated your workflow: + ' + step, { sys: true }));
+  say(`<div>✅ Updated <b>${esc(a.name)}</b>. Its workflow is now:</div>${olist(a.workflow)}${chatBtn(a)}`);
+}
+const LIB = {
+  travel: { name: 'Travel Agent', role: 'Flights & hotels', wf: ['Search flights', 'Compare hotels', 'Report options to you'], res: 'Found 3 flight options and 2 family-friendly hotels within budget.' },
+  itinerary: { name: 'Itinerary Agent', role: 'Daily itineraries', wf: ['Build day-by-day schedule', 'Balance activities and rest', 'Report plan to you'], res: 'Built a 7-day schedule balancing beach days, culture and rest time.' },
+  finance: { ex: 'Finance Agent', res: 'Estimated total budget: Rp 32,600,000 for a family of 4, incl. buffer.' }, research: { ex: 'Research Agent', res: 'Found 5 relevant options and sources worth reviewing.' },
+  marketing: { ex: 'Marketing Agent', res: 'Drafted a performance summary — publishing still needs your approval.' }, assistant: { ex: 'Personal Assistant', res: 'Prepared your day from your calendar and inbox.' },
+};
+function pickPlan(t) { const l = t.toLowerCase(); if (/trip|bali|travel|liburan|flight|hotel/.test(l)) return ['travel', 'itinerary', 'finance', 'research']; if (/campaign|marketing|instagram|ads|iklan/.test(l)) return ['research', 'marketing']; if (/\bday\b|schedule|agenda|hari|calendar/.test(l)) return ['assistant']; return ['research', 'finance']; }
+const orchOut = {};
+function saveOrchOut(rid, share) { const o = orchOut[rid]; if (!o.saved) { OUTPUTS.unshift(o); o.saved = true; } const b = $('#sv' + rid); if (b) { b.disabled = true; b.textContent = 'Saved ✓'; } if (share) openShare(o.id); else toast('Saved to Vault'); }
+function taskFlow(text) {
+  orchBusy = true; const rid = ++orchRun, created = [], stages = ['Research', 'Planning', 'Processing', 'Complete'];
+  const items = pickPlan(text).map(k => { const L = LIB[k]; let a = AGENTS.find(x => x.name === (L.ex || L.name)); if (!a) { a = makeAgent({ name: L.name, role: L.role, steps: [...L.wf, 'Ask your approval before any external action'] }); created.push(a); } return { a, res: L.res }; }), N = items.length;
+  const short = text.length > 44 ? text.slice(0, 44) + '…' : text;
+  oAdd(`<div class="omsg">${oTag()}<div>I will coordinate ${N} agent${N > 1 ? 's' : ''} for this task:</div>${olist(items.map(x => x.a.name + ' → ' + x.a.workflow[0]))}${created.length ? `<div style="font-size:12px;color:var(--indigo);margin-top:8px">＋ Created ${created.length} new agent${created.length > 1 ? 's' : ''} with their own workflow: ${created.map(c => esc(c.name)).join(', ')}</div>` : ''}<div class="achips">${items.map((x, i) => `<div class="achip"><div class="cen">${agentAv(x.a, 'sm')}</div><p>${esc(x.a.name.replace(' Agent', ''))}</p><span id="st${rid}_${i}">Queued</span></div>`).join('')}</div><div class="pipe">${stages.map((s, i) => `<div class="st ${i === 0 ? 'act' : ''}" id="pl${rid}_${i}"><i>${i + 1}</i>${s}</div>`).join('')}</div></div>`);
+  let k = 0;
+  const stage = (s, fin) => stages.forEach((_, i) => { const e = $(`#pl${rid}_${i}`); if (!e) return; e.classList.remove('act', 'done'); if (fin || i < s) e.classList.add('done'); else if (i === s) e.classList.add('act'); });
+  const tick = () => {
+    stage(k === N ? 3 : Math.min(2, Math.floor(k * 3 / N)));
+    if (k >= 1) { const d = items[k - 1], st = $(`#st${rid}_${k - 1}`); if (st) st.textContent = 'Done ✓'; oAdd(`<div class="amsg">${agentAv(d.a, 'xs')}<div class="bd"><b>${esc(d.a.name)} · ${fmtTime(NOW())}</b><p>${esc(d.res)}</p></div></div>`); }
+    if (k < N) { const s2 = $(`#st${rid}_${k}`); if (s2) s2.textContent = 'Working…'; }
+    k++; k <= N ? setTimeout(tick, 1000) : setTimeout(finish, 1000);
+  };
+  const finish = () => {
+    stage(3, true); items.forEach(x => { x.a.messages.push(mk(false, `Task done for "${short}": ${x.res}`)); if (x.a.state === 'ready') x.a.activity = 'Last task: ' + short; });
+    orchOut[rid] = { id: 'o' + NOW(), name: (short.replace(/[^\w ]/g, '').trim().slice(0, 30) || 'Result') + '.pdf', ext: 'pdf', kind: 'Report', ts: NOW(), summary: items.map(x => x.res).join(' '), ai: `Combined result from ${N} agent${N > 1 ? 's' : ''}.`, raw: 'orchestrator run', activity: items.map(x => x.a.name + ' completed') };
+    oAdd(`<div class="omsg">${oTag()}<div>All ${N} agent${N > 1 ? 's' : ''} finished — combined result:</div><div class="tcard"><h4>${esc(short)}</h4>${items.map(x => `<div class="trow"><span>${esc(x.a.name)}</span><b>${esc(x.res)}</b></div>`).join('')}</div><div class="btnrow" style="margin-top:10px"><button class="btn sm" id="sv${rid}" onclick="saveOrchOut(${rid},false)">Save to Vault</button><button class="btn primary sm" onclick="saveOrchOut(${rid},true)">Share</button></div><div class="hint" style="margin:10px 0 4px">Workflow saved. Chat directly with an agent — it only works inside its workflow:</div><div style="display:flex;gap:8px;flex-wrap:wrap">${items.map(x => `<button class="chip" onclick="openAgentChat('${x.a.id}')">💬 ${esc(x.a.name)}</button>`).join('')}</div></div>`);
+    refreshLists(); orchBusy = false;
+  };
+  tick();
+}
+
+const NODE_STYLE = { trigger: ['#F59E0B', 'bolt'], data: ['#3B82F6', 'file'], ai: ['#8B5CF6', 'sparkle'], logic: ['#6366F1', 'flow'], action: ['#0EA5E9', 'plane'], approval: ['#7C5CFF', 'lock'], storage: ['#22C55E', 'shield'], output: ['#8B93AD', 'file'] };
+ICONS.plane = '<path d="M4 12l16-8-6 16-3-7z"/>';
+const WFS = [
+  { id: 'w1', name: 'Daily Marketing Report', desc: 'Monitors Campaign Alpha, analyzes performance and drafts an update.', life: 'active', trigger: 'Every day at 09:00',
+    nodes: [{ id: 'n1', t: 'Parse request', c: 'trigger', s: 'Daily at 09:00', x: 30, y: 30 }, { id: 'n2', t: 'Collect data', c: 'data', s: 'Campaign analytics', x: 30, y: 140 }, { id: 'n3', t: 'Analyze', c: 'ai', s: 'Marketing Agent', x: 30, y: 250 }, { id: 'n4', t: 'Generate report', c: 'output', s: 'Weekly report', x: 30, y: 360 }, { id: 'n5', t: 'Publish update', c: 'approval', s: 'Requires approval', x: 30, y: 470 }, { id: 'n6', t: 'Save to Vault', c: 'storage', s: 'Report + summary', x: 30, y: 580 }], edges: [['n1', 'n2'], ['n2', 'n3'], ['n3', 'n4'], ['n4', 'n5'], ['n5', 'n6']] },
+  { id: 'w2', name: 'Weekly Cash Flow Summary', desc: 'Reads invoices, calculates cash flow, saves a report.', life: 'active', trigger: 'Mondays at 08:00',
+    nodes: [{ id: 'n1', t: 'Weekly schedule', c: 'trigger', s: 'Mondays 08:00', x: 30, y: 30 }, { id: 'n2', t: 'Read invoices', c: 'data', s: 'Vault: Finance', x: 30, y: 140 }, { id: 'n3', t: 'Finance Agent', c: 'ai', s: 'Summarize cash flow', x: 30, y: 250 }, { id: 'n4', t: 'Save report', c: 'storage', s: 'Vault: Reports', x: 30, y: 360 }], edges: [['n1', 'n2'], ['n2', 'n3'], ['n3', 'n4']] },
+  { id: 'w3', name: 'Competitor Price Watch', desc: 'Draft automation — not yet activated.', life: 'draft', trigger: 'Manual run',
+    nodes: [{ id: 'n1', t: 'Manual trigger', c: 'trigger', s: 'Run on demand', x: 30, y: 30 }, { id: 'n2', t: 'Research Agent', c: 'ai', s: 'Scan competitor sites', x: 30, y: 140 }, { id: 'n3', t: 'Generate report', c: 'output', s: 'Draft summary', x: 30, y: 250 }], edges: [['n1', 'n2'], ['n2', 'n3']] },
+];
+let FR = null;
+function renderFlowList() {
+  $('#flowList').innerHTML = `<p class="hint">Personal automations. Private to you — only outputs can ever be shared.</p>` + WFS.map(w => `<div class="card" style="padding:14px;margin-bottom:12px;cursor:pointer" onclick="openFlow('${w.id}')"><div style="display:flex;align-items:center;gap:8px"><b style="font-size:15.5px;flex:1">${esc(w.name)}</b><span class="pill ${w.life === 'active' ? 'green' : 'gray'}">${w.life === 'active' ? 'Active' : 'Draft'}</span></div><div class="hint" style="margin:6px 0 10px">${esc(w.desc)}</div><div style="display:flex;align-items:center;gap:6px;color:var(--text2);font-size:12px"><span style="color:var(--amber)">${icon('bolt', 14)}</span>${esc(w.trigger)}<span style="margin-left:10px">${icon('flow', 14)}</span>${w.nodes.length} steps<button class="btn sm primary" style="margin-left:auto" onclick="event.stopPropagation();openFlow('${w.id}',true)">Run</button></div></div>`).join('') + `<button class="btn block" onclick="newWorkflow()">${icon('plus', 16)}&nbsp; New workflow</button>`;
+}
+function newWorkflow() { const w = { id: 'w' + NOW(), name: 'Untitled workflow', desc: 'New draft — add steps in the builder.', life: 'draft', trigger: 'Manual run', nodes: [{ id: 'n1', t: 'Manual trigger', c: 'trigger', s: 'Run on demand', x: 30, y: 30 }], edges: [] }; WFS.unshift(w); renderFlowList(); openFlow(w.id); openBuilder(); }
+function openFlow(id, run) { const w = WFS.find(x => x.id === id); stopFlow(); FR = { wf: w, st: {}, status: 'idle', tok: 0, t: {} }; w.nodes.forEach(n => FR.st[n.id] = 'idle'); $('#frLiveT').textContent = 'Ready to run'; liveText('Tap Run to start this workflow.'); chart(0); renderFlow(); openPage('flowrun'); if (run) setTimeout(runFlow, 350); }
+function stopFlow() { if (FR) FR.tok++; }
+function leaveFlow() { stopFlow(); back(); }
+function liveText(s) { $('#frLive').textContent = s; }
+function chart(p) { const all = [0, .12, .1, .3, .22, .5, .42, .7, .62, .9, .8, 1], pts = all.slice(0, 2 + Math.round(p * 10)), d = pts.map((v, i) => `${i === 0 ? 'M' : 'L'}${(i / 11 * 300).toFixed(0)} ${(60 - v * 46).toFixed(0)}`).join(' '), last = pts.length - 1; $('#frPath').setAttribute('d', d); $('#frArea').setAttribute('d', d + ` L${(last / 11 * 300).toFixed(0)} 66 L0 66 Z`); }
+function renderFlow() {
+  const w = FR.wf; $('#frSub').textContent = { idle: w.name, running: 'Running your workflow...', waiting: 'Paused — waiting for your approval', done: 'Completed', cancelled: 'Cancelled' }[FR.status];
+  $('#frSteps').innerHTML = w.nodes.map(n => { const s = FR.st[n.id], ic = (NODE_STYLE[n.c] || NODE_STYLE.action)[1], cls = { idle: 'wait', run: 'run', done: 'done', wait: 'appr', cancel: 'skip', skip: 'skip' }[s], sub = { idle: 'Waiting...', run: 'In progress · ' + (FR.t[n.id] || ''), done: 'Completed · ' + (FR.t[n.id] || ''), wait: 'Waiting for your approval', cancel: 'Cancelled', skip: 'Skipped' }[s];
+    return `<div class="step ${cls}"><div class="dot">${s === 'done' ? icon('check', 16) : s === 'wait' ? icon('lock', 14) : icon(ic, 14)}</div><div><b>${esc(n.t)}</b><small>${sub}</small></div></div>`; }).join('');
+  $('#frBanner').style.display = FR.status === 'waiting' ? 'flex' : 'none';
+  const b = $('#frBtn'), live = FR.status === 'running' || FR.status === 'waiting'; b.textContent = live ? 'Cancel' : (FR.status === 'idle' ? 'Run now' : 'Run again'); b.className = 'btn block' + (live ? '' : ' primary');
+}
+function flowBtn() { (FR.status === 'running' || FR.status === 'waiting') ? cancelFlow() : runFlow(); }
+const STEP_TXT = { trigger: 'Parsing your request...', data: 'Collecting campaign data...', ai: 'Analyzing campaign performance data...', output: 'Generating report...', approval: 'Waiting for your approval to publish...', storage: 'Saving to your Vault...', logic: 'Evaluating condition...', action: 'Running action...' };
+async function runFrom(start, tok) {
+  const w = FR.wf;
+  for (let i = start; i < w.nodes.length; i++) {
+    const n = w.nodes[i]; if (tok !== FR.tok) return; FR.st[n.id] = 'run'; FR.t[n.id] = fmtTime(NOW()); liveText(STEP_TXT[n.c] || 'Working...'); $('#frLiveT').textContent = n.t; chart(i / w.nodes.length); renderFlow(); await sleep(1000); if (tok !== FR.tok) return;
+    if (n.c === 'approval') { FR.st[n.id] = 'wait'; FR.status = 'waiting'; FR.pending = i; liveText('Waiting for your approval to publish...'); renderFlow(); return; }
+    FR.st[n.id] = 'done'; FR.t[n.id] = fmtTime(NOW());
+  }
+  finishFlow();
+}
+function runFlow() { stopFlow(); const tok = ++FR.tok; FR.t = {}; FR.wf.nodes.forEach(n => FR.st[n.id] = 'idle'); FR.status = 'running'; renderFlow(); chart(0); runFrom(0, tok); }
+function resumeFlow() { const tok = ++FR.tok, i = FR.pending, n = FR.wf.nodes[i]; FR.st[n.id] = 'done'; FR.t[n.id] = fmtTime(NOW()); FR.status = 'running'; renderFlow(); runFrom(i + 1, tok); }
+function finishFlow() { FR.status = 'done'; chart(1); $('#frLiveT').textContent = 'Completed'; liveText('All steps completed. The result was saved to your Vault.'); if (FR.wf.id === 'w1') OUTPUTS[0].ts = NOW(); renderFlow(); toast('Workflow completed'); }
+function cancelFlow() { stopFlow(); FR.wf.nodes.forEach(n => { if (['run', 'idle', 'wait'].includes(FR.st[n.id])) FR.st[n.id] = 'cancel'; }); FR.status = 'cancelled'; $('#frLiveT').textContent = 'Cancelled'; liveText('This run was cancelled. Nothing was published.'); renderFlow(); toast('Run cancelled'); }
+function apprDecide(ok) {
+  closeSheets(); const a = agentById('a1');
+  if (a.approval) { a.approval = false; a.state = ok ? 'working' : 'idle'; a.activity = ok ? 'Publishing update' : 'Update cancelled by user'; a.messages.push(mk(false, ok ? 'You approved: Publish performance update. Resuming workflow…' : 'You rejected: Publish performance update. The workflow was cancelled.', { sys: true })); if (ok) a.messages.push(mk(false, "Got it — publishing now. I'll notify you once it's live.")); if (curAgent === a) renderAgentChat(); refreshLists(); }
+  if (FR && FR.status === 'waiting') { if (ok) resumeFlow(); else { const n = FR.wf.nodes[FR.pending]; FR.st[n.id] = 'cancel'; FR.wf.nodes.slice(FR.pending + 1).forEach(x => FR.st[x.id] = 'skip'); FR.status = 'cancelled'; $('#frLiveT').textContent = 'Rejected'; liveText('You rejected the approval. Nothing was published.'); renderFlow(); } }
+  toast(ok ? 'Approved' : 'Rejected');
+}
+
+let bSel = null, bDrag = null, bConn = null;
+const bW = () => FR.wf;
+function openBuilder() { buildCanvas(); openPage('builder'); }
+function buildCanvas() {
+  const c = $('#bCanvas'); $$('.bnode', c).forEach(n => n.remove());
+  bW().nodes.forEach(n => { const [col, ic] = NODE_STYLE[n.c] || NODE_STYLE.action, el = document.createElement('div'); el.className = 'bnode'; el.id = 'bn_' + n.id; el.style.left = n.x + 'px'; el.style.top = n.y + 'px';
+    el.innerHTML = `<div class="bi" style="background:${col}">${icon(ic, 16, 'stroke="#fff"')}</div><div><p>${esc(n.t)}</p><span>${esc(n.s)}${n.cond ? ' · ' + n.cond.type : ''}</span></div><div class="bhandle" data-h="${n.id}">${icon('plus', 12)}</div>`; c.appendChild(el); });
+  if (!c._wired) { c._wired = true; c.addEventListener('pointerdown', bDown); c.addEventListener('pointermove', bMove); c.addEventListener('pointerup', bUp); }
+  bSel = null; bToolUpdate(); drawEdges();
+}
+const bCenter = (id, bottom) => { const e = $('#bn_' + id); return { x: e.offsetLeft + e.offsetWidth / 2, y: bottom ? e.offsetTop + e.offsetHeight : e.offsetTop }; };
+function drawEdges() { let h = ''; bW().edges.forEach(([a, b]) => { if (!$('#bn_' + a) || !$('#bn_' + b)) return; const p = bCenter(a, true), q = bCenter(b, false), m = (p.y + q.y) / 2; h += `<path d="M${p.x} ${p.y} C ${p.x} ${m} ${q.x} ${m} ${q.x} ${q.y}" stroke="#B9C3E0" stroke-width="2" fill="none"/>`; }); if (bConn && bConn.to) h += `<path d="M${bConn.x} ${bConn.y} L ${bConn.to.x} ${bConn.to.y}" stroke="#2F7BF5" stroke-width="2.4" fill="none"/>`; $('#wireSvg').innerHTML = h; }
+function bDown(ev) { const hd = ev.target.closest('.bhandle'), nd = ev.target.closest('.bnode'); if (hd) { const id = hd.dataset.h, c = bCenter(id, true); bConn = { id, x: c.x, y: c.y, to: { x: c.x, y: c.y } }; ev.stopPropagation(); return; } if (nd) { const id = nd.id.slice(3); bSelect(id); bDrag = { id, sx: ev.clientX, sy: ev.clientY, ox: nd.offsetLeft, oy: nd.offsetTop }; } else bSelect(null); }
+function bMove(ev) { const c = $('#bCanvas'), r = c.getBoundingClientRect(); if (bConn) { bConn.to = { x: ev.clientX - r.left + c.scrollLeft, y: ev.clientY - r.top + c.scrollTop }; drawEdges(); return; } if (bDrag) { const el = $('#bn_' + bDrag.id), n = bW().nodes.find(x => x.id === bDrag.id); n.x = Math.max(0, bDrag.ox + ev.clientX - bDrag.sx); n.y = Math.max(0, bDrag.oy + ev.clientY - bDrag.sy); el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; drawEdges(); } }
+function bUp(ev) { if (bConn) { const t = ev.target.closest('.bnode'); if (t && t.id.slice(3) !== bConn.id) { const to = t.id.slice(3); if (!bW().edges.some(e => e[0] === bConn.id && e[1] === to)) bW().edges.push([bConn.id, to]); } bConn = null; drawEdges(); } bDrag = null; }
+function bSelect(id) { bSel = id; $$('.bnode').forEach(n => n.classList.toggle('sel', n.id === 'bn_' + id)); bToolUpdate(); }
+function bToolUpdate() { const n = bSel && bW().nodes.find(x => x.id === bSel); $('#bTool').style.display = n ? 'flex' : 'none'; if (n) { $('#bSel').textContent = n.t; $('#bCondBtn').style.display = n.c === 'logic' ? '' : 'none'; } }
+function bDelete() { if (!bSel) return; const w = bW(); w.nodes = w.nodes.filter(n => n.id !== bSel); w.edges = w.edges.filter(e => e[0] !== bSel && e[1] !== bSel); delete FR.st[bSel]; buildCanvas(); }
+function bAdd() { $('#pickSheet').innerHTML = `<div class="handle"></div><h3 style="margin-bottom:6px">Add node</h3>` + Object.keys(NODE_STYLE).map(k => `<div class="setrow" onclick="bAddType('${k}')"><div class="ic" style="background:${NODE_STYLE[k][0]};color:#fff">${icon(NODE_STYLE[k][1], 17, 'stroke="#fff"')}</div><div class="grow"><b style="text-transform:capitalize">${k}</b></div></div>`).join(''); openSheet('pickSheet'); }
+function bAddType(k) { closeSheets(); const w = bW(), id = 'n' + NOW(), y = Math.max(0, ...w.nodes.map(n => n.y)) + 110; w.nodes.push({ id, t: 'New ' + k, c: k, s: 'Tap to configure', x: 30, y }); FR.st[id] = 'idle'; buildCanvas(); }
+function bValidate() { const w = bW(), tr = w.nodes.filter(n => n.c === 'trigger').length, iss = []; if (tr === 0) iss.push('No trigger node'); if (tr > 1) iss.push('More than one trigger'); w.nodes.forEach(n => { if (n.c !== 'trigger' && !w.edges.some(e => e[1] === n.id)) iss.push(`"${n.t}" has no incoming connection`); }); toast(iss.length ? 'Validation: ' + iss.join('; ') : 'Looks good — every node is connected from the trigger.'); }
+function bCondition() {
+  const n = bW().nodes.find(x => x.id === bSel), c = n.cond || { type: 'none', branch: 'Yes', percent: 50 };
+  $('#condSheet').innerHTML = `<div class="handle"></div><h3>Branch condition</h3><div class="hint">How should “${esc(n.t)}” choose between its labeled branches?</div><div class="cardlist" id="cdOpts">${[['none', 'Alphabetical (default)', 'First label alphabetically'], ['always', 'Always', 'Always take one branch'], ['probability', 'Probability', 'Take a branch X% of the time'], ['random', 'Random', 'Uniform pick among branches']].map(([k, t, s]) => `<div class="row" onclick="cdPick('${k}')"><span class="rd ${c.type === k ? 'on' : ''}" data-k="${k}"></span><div class="grow"><div class="nm">${t}</div><div class="sb">${s}</div></div></div>`).join('')}</div><div class="field" style="margin-top:12px"><label>Branch label (for Always / Probability)</label><div class="in"><input id="cdBranch" value="${esc(c.branch || 'Yes')}"></div></div><div class="field"><label>Percent (Probability)</label><div class="in"><input id="cdPct" type="number" min="0" max="100" value="${c.percent ?? 50}"></div></div><div class="btnrow"><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="cdSave()">Save</button></div>`;
+  window._cd = c.type; openSheet('condSheet');
+}
+function cdPick(k) { window._cd = k; $$('#cdOpts .rd').forEach(r => r.classList.toggle('on', r.dataset.k === k)); }
+function cdSave() { const n = bW().nodes.find(x => x.id === bSel), t = window._cd; if (t === 'none') delete n.cond; else n.cond = { type: t, branch: $('#cdBranch').value.trim(), percent: Math.min(100, Math.max(0, +$('#cdPct').value || 0)) }; closeSheets(); buildCanvas(); toast(t === 'none' ? 'Condition cleared' : 'Condition saved'); }
+
+[...PEOPLE, ...GROUPS, ...AGENTS].forEach(o => ensureIds(o.messages));
+hydrateIcons(); $('#apprAv').innerHTML = agentAv(agentById('a1'), 'sm');
+stack.push('welcome'); updateNav(); renderMessages();
+
+</script></body></html>

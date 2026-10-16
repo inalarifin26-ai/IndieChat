@@ -1,0 +1,220 @@
+<div id="app">
+<section class="root active" id="root-msg">
+  <div class="head"><h1>Messages</h1>
+    <button class="ibtn" onclick="openPage('contacts')" title="Contacts"><i data-i="users" data-s="22"></i></button>
+    <button class="ibtn" onclick="openPage('newchat')" title="New chat"><i data-i="edit" data-s="21"></i></button></div>
+  <div class="search" onclick="openPage('search')"><i data-i="search" data-s="18"></i><span>Search chats, agents, or contacts</span></div>
+  <div class="chips" id="msgChips"></div>
+  <div class="body flush" id="chatList"></div>
+</section>
+<section class="root" id="root-agents">
+  <div class="head"><h1>Agent Center</h1><button class="ibtn" onclick="openOrch()" title="Orchestrator"><i data-i="sparkle" data-s="22"></i></button></div>
+  <div class="seg" id="agentSeg"><button class="on" data-v="mine" onclick="agentTab('mine')">My Agents</button><button data-v="tpl" onclick="agentTab('tpl')">Templates</button></div>
+  <div class="body flush" id="agentsBody"></div>
+</section>
+<section class="root" id="root-flow">
+  <div class="head"><h1>Flow</h1><button class="ibtn" onclick="newWorkflow()" title="New workflow"><i data-i="plus" data-s="22"></i></button></div>
+  <div class="body" id="flowList"></div>
+</section>
+<section class="root" id="root-vault">
+  <div class="head"><h1>My Vault</h1><button class="ibtn" onclick="toast('Everything here is private to you')"><i data-i="shield" data-s="22"></i></button></div>
+  <div class="chips" id="vaultChips"><button class="chip on" data-v="files" onclick="vaultTab('files')">Files</button><button class="chip" data-v="notes" onclick="vaultTab('notes')">Notes</button><button class="chip" data-v="mem" onclick="vaultTab('mem')">Memories</button></div>
+  <div class="body flush" id="vaultBody"></div>
+</section>
+<section class="root" id="root-more">
+  <div class="head"><h1>Indie Profile</h1></div>
+  <div class="body flush" id="profileBody"></div>
+</section>
+<nav id="tabbar">
+  <button class="on" data-t="msg" onclick="go('msg')"><i data-i="chat" data-s="23"></i>Message<span class="bd" id="msgBadge" style="display:none"></span></button>
+  <button data-t="agents" onclick="go('agents')"><i data-i="user" data-s="23"></i>Agents<span class="bd" id="agBadge" style="display:none"></span></button>
+  <button data-t="flow" onclick="go('flow')"><i data-i="flow" data-s="23"></i>Flow</button>
+  <button data-t="vault" onclick="go('vault')"><i data-i="shield" data-s="23"></i>Vault</button>
+  <button data-t="more" onclick="go('more')"><i data-i="grid" data-s="23"></i>More</button>
+</nav>
+
+<section class="page fade open welcome" id="pg-welcome" style="z-index:50">
+  <img class="logo" src="__LOGO_FULL__" alt="indie">
+  <h2>Personal Chat</h2>
+  <p>Your private space for conversations, clear connections, and intelligent collaboration.</p>
+  <button class="btn primary block" onclick="openPage('createid')">Get Started</button>
+  <button class="link" onclick="signIn()">Sign In</button>
+</section>
+<section class="page" id="pg-createid" style="z-index:51">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <h2 class="big" style="margin-top:2px">Create Your ID</h2>
+    <p class="hint">Your identity is your key to Indie. It's private, secure, and only yours.</p>
+    <div class="avwrap"><img src="__LOGO_ICON__" width="52" height="52" alt=""><span class="cam"><i data-i="camera" data-s="14"></i></span></div>
+    <div class="field" id="fId"><label>Choose your Indie ID</label><div class="in"><input id="idInput" placeholder="indie_user" autocapitalize="off" oninput="idCheck()"><span class="suffix">@indie.id</span></div><div class="err" id="idErr"></div><div class="ok">This ID is available</div></div>
+    <div class="field" id="fPin"><label>Local PIN (min. 6 characters)</label><div class="in"><input id="pinInput" type="password" placeholder="••••••"></div><div class="err">Use at least 6 characters</div></div>
+    <div class="lbl faint">Suggestions</div><div id="idSugs"></div>
+    <button class="btn primary block" style="margin-top:14px" onclick="createIdNext()">Continue</button>
+  </div>
+</section>
+<section class="page" id="pg-phrase" style="z-index:52">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <div class="iconbox"><i data-i="shield" data-s="34"></i></div>
+    <h2 class="big center">Create Phrase Key</h2>
+    <p class="hint center">Your phrase key is the only way to recover your account. Keep it safe and private.</p>
+    <div class="words" id="wordGrid"></div>
+    <div class="chkrow" id="phraseRow" onclick="phraseToggle()"><span class="cb" id="phraseCb"><i data-i="check" data-s="14"></i></span><span>I have saved my phrase key in a safe place</span></div>
+    <button class="btn primary block" onclick="phraseContinue()">Continue</button>
+  </div>
+</section>
+<section class="page withnav" id="pg-contacts">
+  <div class="head"><h1>Contacts</h1><button class="ibtn" onclick="renderContactsPage();toast('Refreshed')"><i data-i="refresh" data-s="20"></i></button></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ctSearch" placeholder="Search contacts..." oninput="renderContactsPage()"></div>
+  <div class="chips" id="ctChips"></div>
+  <div class="body flush" id="ctBody"></div>
+  <button class="fab" onclick="openAddContact(false)"><i data-i="plus" data-s="26"></i></button>
+</section>
+<section class="page" id="pg-addcontact">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="acTitle">Create New Contact</h1></div>
+  <div class="seg" id="acSeg"><button class="on" data-v="people" onclick="acTab('people')"><i data-i="user" data-s="16"></i>People</button><button data-v="agent" onclick="acTab('agent')"><i data-i="sparkle" data-s="16"></i>Agent</button></div>
+  <div class="body" id="acPeople">
+    <div class="field" id="fName"><label>Name</label><div class="in"><input id="acName" placeholder="John Smith"></div><div class="err">Name is required</div></div>
+    <div class="field" id="fInfo"><label>Indie ID / Phone / Email</label><div class="in"><input id="acInfo" placeholder="e.g. john@indie.id"></div><div class="err">Enter an Indie ID, phone number or email</div></div>
+    <div class="field"><label>Add to Group (Optional)</label><div class="in"><select id="acGroup"></select></div></div>
+    <button class="btn primary block" style="margin-top:8px" onclick="saveContact()">Save Contact</button>
+  </div>
+  <div class="body" id="acAgent" style="display:none">
+    <div class="card center" style="padding:18px">
+      <div class="iconbox" style="margin-top:0"><i data-i="sparkle" data-s="30"></i></div>
+      <b style="font-size:16px">Agents are created by the Orchestrator</b>
+      <p class="hint" style="margin-top:8px">Tell the Orchestrator what you need. It builds the agent and defines its workflow — then you can chat with it directly.</p>
+      <button class="btn primary block" onclick="closePage('addcontact');openOrch('Create an agent to ')">Ask the Orchestrator</button>
+    </div>
+  </div>
+</section>
+<section class="page" id="pg-newchat">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Create New Chat</h1></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ncSearch" placeholder="Search contacts or agents" oninput="renderNewChat()"></div>
+  <div class="body flush" id="ncBody"></div>
+</section>
+<section class="page" id="pg-search">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Search</h1><i data-i="search" data-s="20" style="color:var(--text2)"></i></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="sqInput" placeholder="Search messages, contacts, groups..." oninput="renderSearch()"></div>
+  <div class="chips" id="sqChips"></div>
+  <div class="body flush" id="sqBody"></div>
+</section>
+<section class="page" id="pg-chat">
+  <div class="head sub" style="padding-bottom:8px;border-bottom:1px solid var(--stroke);background:#fff">
+    <button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div id="chAv"></div>
+    <div style="flex:1;min-width:0;cursor:pointer" onclick="openSettings()"><h1 id="chName" style="font-size:16px;margin:0"></h1><div class="t2" id="chSub"></div></div>
+    <button class="ibtn" onclick="toast('Calls are not part of this preview')"><i data-i="phone" data-s="20"></i></button>
+    <button class="ibtn" onclick="openSettings()"><i data-i="kebab" data-s="20"></i></button>
+  </div>
+  <div class="chat" id="chBody"></div>
+  <div class="replybar" id="chReply"></div>
+  <div class="composer"><button class="plus" onclick="openAttach('chat')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="chInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendChat()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-agentchat">
+  <div class="head sub" style="padding-bottom:8px;border-bottom:1px solid var(--stroke);background:#fff">
+    <button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div id="agAv"></div>
+    <div style="flex:1;min-width:0"><h1 id="agName" style="font-size:16px;margin:0"></h1><div class="t2" id="agSub"></div></div>
+    <button class="ibtn" onclick="openAgentInfo()"><i data-i="kebab" data-s="20"></i></button>
+  </div>
+  <div class="chat" id="agBody"></div>
+  <div class="replybar" id="agReply"></div>
+  <div class="composer"><button class="plus" onclick="openAttach('agent')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="agInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendAgent()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendAgent()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-settings">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Chat Settings</h1></div>
+  <div class="body" id="stBody"></div>
+</section>
+<section class="page" id="pg-creategroup">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button></div>
+  <div class="body">
+    <div class="iconbox"><i data-i="users" data-s="32"></i></div>
+    <h2 class="big center">Create Group Chat</h2>
+    <p class="hint center">Add members and give your group a name and description.</p>
+    <div class="field" id="fGName"><label>Group Name</label><div class="in"><input id="gName" placeholder="Marketing Team"></div><div class="err">Group name is required</div></div>
+    <div class="field"><label>Description (Optional)</label><div class="in ta"><textarea id="gDesc" placeholder="Discuss campaigns, updates, and more."></textarea></div></div>
+    <div class="lbl">Add Members</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px" id="gMembers"></div>
+    <div class="card" style="padding:13px 14px;display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="flex:1"><b style="font-size:14.5px">Allow new members</b><div class="hint" style="margin:2px 0 0">Others can join this group via invite link</div></div>
+      <span class="sw on" id="gAllow" onclick="this.classList.toggle('on')"></span></div>
+    <div class="cardlist" id="gVis" style="margin-bottom:16px"></div>
+    <button class="btn primary block" onclick="createGroup()">Create Group</button>
+  </div>
+</section>
+<section class="page" id="pg-invite">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="ivTitle">Invite to Group</h1></div>
+  <div class="search"><i data-i="search" data-s="18"></i><input id="ivSearch" placeholder="Search contacts..." oninput="renderInvite()"></div>
+  <div class="body flush" id="ivBody"></div>
+  <div style="padding:10px 18px calc(14px + var(--safe-bot));border-top:1px solid var(--stroke);background:#fff"><div class="hint" id="ivCount" style="margin:0 0 8px;font-weight:700"></div><button class="btn primary block" id="ivBtn" onclick="inviteDone()">Invite</button></div>
+</section>
+<section class="page" id="pg-orch">
+  <div class="head sub" style="padding-bottom:8px"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button>
+    <div style="flex:1"><h1 style="font-size:17px;margin:0">Orchestrator Chat Room</h1><div class="t2">Direct your agents. Turn ideas into action.</div></div></div>
+  <div class="orbwrap" id="orbWrap">
+    <div class="orb"><div class="core"><i data-i="sparkle" data-s="26"></i></div></div>
+    <div class="askb">What would you like to do today?</div>
+    <div class="grid2" id="orbChips"></div>
+  </div>
+  <div class="chat" id="orBody" style="display:none"></div>
+  <div class="composer"><button class="plus" onclick="toast('Attachments are coming soon')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="orInput" placeholder="Type your request..." onkeydown="if(event.key==='Enter')sendOrch()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" onclick="sendOrch()"><i data-i="send" data-s="19"></i></button></div>
+</section>
+<section class="page" id="pg-flowrun">
+  <div class="head sub"><button class="ibtn" onclick="leaveFlow()"><i data-i="back" data-s="22"></i></button>
+    <div style="flex:1"><h1 style="font-size:19px;margin:0" id="frTitle">INDIE Flow</h1><div class="t2" id="frSub">Running your workflow...</div></div>
+    <button class="ibtn" onclick="openBuilder()" title="Edit in builder"><i data-i="edit" data-s="20"></i></button></div>
+  <div class="body">
+    <div class="steps" id="frSteps"></div>
+    <div class="banner" id="frBanner" style="display:none"><i data-i="lock" data-s="18"></i><span>Paused — waiting for your approval</span><button onclick="openSheet('apprSheet')">Review</button></div>
+    <div class="lbl faint" style="margin-top:4px">Live output</div>
+    <div class="live"><h5 id="frLiveT">Ready to run</h5><svg id="frChart" viewBox="0 0 300 70" width="100%" height="70" preserveAspectRatio="none"><path id="frArea" d="" fill="rgba(47,123,245,.10)"/><path id="frPath" d="M0 55 L300 55" fill="none" stroke="#2F7BF5" stroke-width="2.5" stroke-linecap="round"/></svg><p id="frLive">Tap Run to start this workflow.</p></div>
+  </div>
+  <div style="padding:10px 18px calc(14px + var(--safe-bot));background:var(--bg)"><button class="btn block" id="frBtn" onclick="flowBtn()">Run now</button></div>
+</section>
+<section class="page" id="pg-builder">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Builder</h1>
+    <button class="ibtn" onclick="bValidate()" title="Validate"><i data-i="check" data-s="21"></i></button>
+    <button class="ibtn" onclick="bAdd()" title="Add node"><i data-i="plus" data-s="22"></i></button></div>
+  <div class="bcanvas" id="bCanvas"><svg id="wireSvg"></svg></div>
+  <div class="btool" id="bTool"><span id="bSel" style="flex:1"></span><button class="btn sm" id="bCondBtn" onclick="bCondition()" style="display:none">Condition</button><button class="btn sm danger" onclick="bDelete()">Delete</button></div>
+  <div class="hint center" style="margin:0;padding:8px 16px;background:#fff">Drag to move · drag the blue dot to connect · tap a node to select</div>
+</section>
+<section class="page" id="pg-output">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1 id="opTitle">Result</h1></div>
+  <div class="body" id="opBody"></div>
+</section>
+<section class="page" id="pg-consent">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Privacy &amp; Security</h1></div>
+  <div class="body" id="cnBody"></div>
+</section>
+<section class="page" id="pg-connectors">
+  <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Connectors</h1></div>
+  <div class="body" id="cxBody"></div>
+</section>
+
+<div class="backdrop" id="bd" onclick="closeSheets()"></div>
+<div class="sheet" id="shareSheet"></div>
+<div class="sheet" id="msgSheet"></div>
+<div class="sheet" id="attachSheet"></div>
+<div class="sheet" id="pickSheet"></div>
+<div class="sheet" id="membersSheet"></div>
+<div class="sheet" id="noteSheet"></div>
+<div class="sheet" id="condSheet"></div>
+<div class="sheet" id="apprSheet">
+  <div class="handle"></div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div id="apprAv"></div><div><h3 style="font-size:16px">Marketing Agent</h3><div class="hint" style="margin:0">Requesting permission</div></div></div>
+  <div class="cardlist" style="margin-bottom:14px">
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Wants to</div><div class="nm">Publish performance update</div></div></div>
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Access / scope</div><div class="nm">External platform: Instagram</div></div></div>
+    <div class="row" style="cursor:default"><div class="grow"><div class="sb" style="margin:0">Autonomy</div><div class="nm">One-time approval</div></div></div></div>
+  <div class="btnrow"><button class="btn" onclick="apprDecide(false)">Deny</button><button class="btn primary" onclick="apprDecide(true)">Allow</button></div>
+</div>
+<div class="toast" id="toast"></div>
+</div>
