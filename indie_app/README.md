@@ -118,6 +118,52 @@ there's no session yet — see below.
    `GOOGLE_CLIENT_ID`/`SECRET` yet, the connector shows as "Unavailable"
    instead of erroring.
 
+## Light-theme redesign — screen map
+
+The UI follows the two reference sheets ("Personal Chat" and "INDIE Message").
+Design tokens live in `lib/core/theme/app_colors.dart` (white surfaces on a
+soft lavender page, indigo → blue → cyan gradient for primary actions and your
+own bubbles); shared pieces in `lib/widgets/common.dart`
+(`GradientButton`, `FilterChips`, `SegmentedTabs`, `ChatRow`, `ChatComposer`, avatars…).
+
+| Reference screen | File |
+|---|---|
+| 01 Intro / Welcome | `screens/auth/welcome_screen.dart` |
+| 02 Create Your ID (live availability, PIN, suggestions) | `screens/auth/create_id_screen.dart` |
+| 03 Phrase Key (12 words, shown once) | `screens/auth/phrase_key_screen.dart` |
+| Sign In (log in / recover) | `screens/auth/sign_in_screen.dart` |
+| Messages (people + groups + agents, filter chips) | `screens/messages/messages_list_screen.dart` |
+| 05 Contacts · 06 Add Contact (People \| Agent) | `contacts_screen.dart`, `add_contact_screen.dart` |
+| Create New Chat · 12 Search | `new_chat_screen.dart`, `search_screen.dart` |
+| 07 Create Group · 10 Invite Members | `create_group_screen.dart`, `invite_members_screen.dart` |
+| 08 Group Chat · 11 Group/Chat Settings | `chat_screen.dart`, `contact_settings_screen.dart` |
+| 09 Chat with Agent | `screens/agents/agent_chat_screen.dart` |
+| Agent Center (My Agents \| Templates) | `screens/agents/agent_center_screen.dart` |
+| Orchestrator Chat Room (orb + instruction chips) | `screens/agents/orchestrator_screen.dart` |
+| INDIE Flow (stepper, live output, Cancel) | `screens/workflows/workflow_execution_screen.dart` |
+| Share Result | `widgets/share_result_sheet.dart` |
+| My Vault (Files \| Notes \| Memories) | `screens/vault/vault_screen.dart` |
+| Indie Profile (More) | `screens/more/more_screen.dart` |
+
+Things worth knowing:
+- The Messages list now mixes people, groups and agents (as the new reference
+  shows) — every row stays unmistakable (pastel initials / group icon / coloured
+  agent glyph + status line) and the **People / Agents / Groups** chips filter
+  it. The earlier spec said "never one mixed list"; if you prefer that rule,
+  default the chips to *People* and drop the *All* chip in `messages_list_screen.dart`.
+- Agents are still created **only** by the Orchestrator: the *Agent* tab of
+  Add Contact and the *Templates* tab both hand off to it.
+- The account is created when you tap **Continue** on *Create Your ID* (that is
+  when the recovery phrase exists), so the Phrase Key screen has no back button.
+- Group member replies, like delivery receipts, are simulated by the backend.
+- Calls and account settings are placeholders ("not available yet").
+- Logic nodes in the builder now have a **Branch condition** editor
+  (alphabetical / always / probability / random).
+- Not compiled in the authoring sandbox (no Flutter SDK there): every file was
+  checked with a real Dart parser, and class names, enum switches and widget
+  call signatures were cross-checked by script, but run `flutter analyze` once
+  after `flutter pub get` and report anything it finds.
+
 ## What's real vs. simulated
 
 | Area | This build |

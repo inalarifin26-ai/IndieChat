@@ -1,162 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../models/agent_models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
-import '../../widgets/indie_logo.dart';
+import '../messages/messages_list_screen.dart' show agentStatusLine;
 import 'agent_chat_screen.dart';
 import 'orchestrator_screen.dart';
 
-class AgentCenterScreen extends StatelessWidget {
+class _Template {
+  final String name;
+  final String desc; // completes "Create an agent to …"
+  const _Template(this.name, this.desc);
+}
+
+const _templates = <_Template>[
+  _Template('Marketing Agent', 'monitor campaigns and report performance weekly'),
+  _Template('Research Agent', 'research competitors and summarize findings'),
+  _Template('Finance Agent', 'track invoices and summarize cash flow'),
+  _Template('Personal Assistant', 'read my calendar and prepare a daily brief'),
+  _Template('Health Coach', 'plan workouts and remind me every morning'),
+  _Template('Content Creator', 'draft social media posts for my brand'),
+];
+
+/// Agent Center — My Agents | Templates. Agents are never created here
+/// directly: both tabs hand off to the Orchestrator, which defines the workflow.
+class AgentCenterScreen extends StatefulWidget {
   const AgentCenterScreen({super.key});
 
-  String _stateLabel(AgentActivityState s) {
-    switch (s) {
-      case AgentActivityState.idle:
-        return 'Idle';
-      case AgentActivityState.ready:
-        return 'Ready';
-      case AgentActivityState.monitoring:
-        return 'Monitoring';
-      case AgentActivityState.working:
-        return 'Working';
-      case AgentActivityState.waitingApproval:
-        return 'Approval required';
-      case AgentActivityState.scheduled:
-        return 'Scheduled';
-      case AgentActivityState.error:
-        return 'Error';
-    }
-  }
+  @override
+  State<AgentCenterScreen> createState() => _AgentCenterScreenState();
+}
 
-  Color _stateColor(AgentActivityState s) {
-    switch (s) {
-      case AgentActivityState.waitingApproval:
-        return AppColors.approval;
-      case AgentActivityState.error:
-        return AppColors.danger;
-      case AgentActivityState.working:
-      case AgentActivityState.monitoring:
-      case AgentActivityState.ready:
-        return AppColors.success;
-      case AgentActivityState.scheduled:
-        return AppColors.warning;
-      case AgentActivityState.idle:
-        return AppColors.textFaint;
-    }
-  }
+class _AgentCenterScreenState extends State<AgentCenterScreen> {
+  int _tab = 0;
+
+  void _openOrchestrator([String? prefill]) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrchestratorScreen(prefill: prefill)));
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final needsAttention = state.agents.where((a) => a.needsAttention).toList();
-    final active = state.agents.where((a) => !a.needsAttention).toList();
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Agent Center'),
-        actions: [
-          IconButton(
-            tooltip: 'Ask Orchestrator',
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OrchestratorScreen())),
-            icon: const Icon(Icons.auto_awesome_rounded),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: [
-          const Text(
-            'Agents are created by the Orchestrator, which also defines their workflow.',
-            style: TextStyle(color: AppColors.textFaint, fontSize: 12.5),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OrchestratorScreen())),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.transparent),
-                  gradient: const LinearGradient(colors: [AppColors.violet, AppColors.indigo, AppColors.cyan], begin: Alignment.bottomLeft, end: Alignment.topRight),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(1.4),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
-                    child: Row(
-                      children: [
-                        const IndieMark(size: 44),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Orchestrator', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                              Text('Your command center — coordinates multiple agents on one task', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                            ],
-                          ),
-                        ),
-                        const StatusPill(label: 'Active', color: AppColors.success),
-                      ],
+      body: SafeArea(
+        child: Column(children: [
+          PageHeader(title: 'Agent Center', actions: [
+            IconButton(tooltip: 'Orchestrator', onPressed: _openOrchestrator, icon: const Icon(Icons.auto_awesome_outlined)),
+          ]),
+          SegmentedTabs(labels: const ['My Agents', 'Templates'], selected: _tab, onChanged: (i) => setState(() => _tab = i)),
+          Expanded(
+            child: _tab == 0
+                ? ListView(padding: const EdgeInsets.only(bottom: 24), children: [
+                    for (final a in state.agents)
+                      ChatRow(
+                        avatar: AgentAvatar(agent: a),
+                        title: a.name,
+                        subtitle: a.currentActivity,
+                        statusLine: agentStatusLine(a, suffix: agentStyleFor(a.name, role: a.role).tag),
+                        showChevron: true,
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AgentChatScreen(agentId: a.id))),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                      child: OutlinedButton.icon(
+                        onPressed: () => _openOrchestrator('Create an agent to '),
+                        icon: const Icon(Icons.auto_awesome_outlined, size: 17),
+                        label: const Text('Create an agent with the Orchestrator'),
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  ])
+                : ListView(padding: const EdgeInsets.only(bottom: 24), children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(18, 0, 18, 8),
+                      child: Text('Templates start a conversation with the Orchestrator, which builds the agent and defines its workflow.', style: TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.textSecondary)),
+                    ),
+                    for (final t in _templates) _templateRow(state, t),
+                  ]),
           ),
-          if (needsAttention.isNotEmpty) ...[
-            const SectionHeader(title: 'Needs attention'),
-            ...needsAttention.map((a) => _AgentTile(agent: a, stateColor: _stateColor(a.state), stateLabel: _stateLabel(a.state))),
-          ],
-          const SectionHeader(title: 'Active'),
-          ...active.map((a) => _AgentTile(agent: a, stateColor: _stateColor(a.state), stateLabel: _stateLabel(a.state))),
-        ],
+        ]),
       ),
     );
   }
-}
 
-class _AgentTile extends StatelessWidget {
-  final Agent agent;
-  final Color stateColor;
-  final String stateLabel;
-  const _AgentTile({required this.agent, required this.stateColor, required this.stateLabel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AgentChatScreen(agentId: agent.id))),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              AgentAvatar(agent: agent, size: 46),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(agent.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                    const SizedBox(height: 2),
-                    Text(agent.currentActivity,
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              StatusPill(label: stateLabel, color: stateColor),
-            ],
-          ),
+  Widget _templateRow(AppState state, _Template t) {
+    final have = state.agents.any((a) => a.name == t.name);
+    final st = agentStyleFor(t.name);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      child: Row(children: [
+        Container(width: 48, height: 48, decoration: BoxDecoration(color: st.color, shape: BoxShape.circle), child: Icon(st.icon, color: Colors.white, size: 24)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Text(st.tag, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          ]),
         ),
-      ),
+        if (have)
+          const StatusPill(label: 'Added', color: AppColors.textSecondary)
+        else
+          SizedBox(
+            height: 34,
+            child: ElevatedButton(
+              onPressed: () => _openOrchestrator('Create an agent to ${t.desc}'),
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16), textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+              child: const Text('Create'),
+            ),
+          ),
+      ]),
     );
   }
 }

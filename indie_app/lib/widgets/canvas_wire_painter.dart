@@ -58,7 +58,7 @@ class CanvasWirePainter extends CustomPainter {
 
     if (dragFrom != null && dragTo != null) {
       final paint = Paint()
-        ..color = AppColors.cyan.withOpacity(0.8)
+        ..color = AppColors.accent.withOpacity(0.8)
         ..strokeWidth = 2.4
         ..style = PaintingStyle.stroke;
       _curve(canvas, dragFrom!, dragTo!, paint);

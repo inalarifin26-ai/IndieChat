@@ -7,6 +7,7 @@ import '../../core/format.dart';
 import '../../models/agent_models.dart';
 import '../../models/orchestrator_models.dart';
 import '../../state/app_state.dart';
+import '../../widgets/common.dart';
 import '../../widgets/indie_logo.dart';
 import '../../widgets/message_bubble.dart';
 import 'agent_chat_screen.dart';
@@ -39,12 +40,6 @@ class _OrchestratorScreenState extends State<OrchestratorScreen> {
     final state = context.read<AppState>();
     if (!state.orchLoaded) await state.loadOrchestrator();
     _jumpToEndSoon();
-  }
-
-  @override
-  void dispose() {
-    _poll?.cancel();
-    super.dispose();
   }
 
   void _jumpToEndSoon() {
@@ -81,28 +76,76 @@ class _OrchestratorScreenState extends State<OrchestratorScreen> {
     });
   }
 
+  static const _chips = <List<Object>>[
+    ['Create a report', Icons.description_outlined, 'Create an agent to report weekly campaign performance'],
+    ['Plan my day', Icons.schedule_rounded, 'Plan my day from my calendar and emails'],
+    ['Analyze data', Icons.bar_chart_rounded, 'Analyze my latest campaign performance'],
+    ['Build a workflow', Icons.account_tree_outlined, 'Build a workflow to monitor my campaign every morning'],
+  ];
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    _controller.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const _Orb(),
+          const SizedBox(height: 34),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.stroke), boxShadow: [BoxShadow(color: AppColors.indigo.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 4))]),
+            child: const Text('What would you like to do today?', style: TextStyle(fontSize: 15)),
+          ),
+          const SizedBox(height: 22),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 3.1,
+            children: [
+              for (final c in _chips)
+                GestureDetector(
+                  onTap: () => _send(c[2] as String),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.stroke)),
+                    child: Row(children: [
+                      Icon(c[1] as IconData, size: 18, color: AppColors.indigo),
+                      const SizedBox(width: 9),
+                      Expanded(child: Text(c[0] as String, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+                    ]),
+                  ),
+                ),
+            ],
+          ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final empty = state.orchLoaded && !state.orchWaiting && state.orchMessages.every((m) => m.kind == OrchKind.welcome);
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
-          children: [
-            const SizedBox(width: 4),
-            const IndieMark(size: 32),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text('Orchestrator', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700)),
-                  Text('Creates agents & defines their workflows', style: TextStyle(fontSize: 11, color: AppColors.textFaint)),
-                ],
-              ),
-            ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Orchestrator Chat Room', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            Text('Direct your agents. Turn ideas into action.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           ],
         ),
       ),
@@ -111,49 +154,56 @@ class _OrchestratorScreenState extends State<OrchestratorScreen> {
           Expanded(
             child: !state.orchLoaded
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    controller: _scroll,
-                    padding: const EdgeInsets.all(14),
-                    itemCount: state.orchMessages.length + (state.orchWaiting ? 1 : 0),
-                    itemBuilder: (context, i) {
-                      if (i >= state.orchMessages.length) return const Padding(padding: EdgeInsets.only(bottom: 8), child: TypingBubble());
-                      final m = state.orchMessages[i];
-                      return Padding(padding: const EdgeInsets.only(bottom: 4), child: _OrchBubble(message: m));
-                    },
-                  ),
+                : empty
+                    ? _emptyState()
+                    : ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.all(14),
+                        itemCount: state.orchMessages.length + (state.orchWaiting ? 1 : 0),
+                        itemBuilder: (context, i) {
+                          if (i >= state.orchMessages.length) return const Padding(padding: EdgeInsets.only(bottom: 8), child: TypingBubble());
+                          final m = state.orchMessages[i];
+                          return Padding(padding: const EdgeInsets.only(bottom: 4), child: _OrchBubble(message: m));
+                        },
+                      ),
           ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
-            decoration: const BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.stroke))),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      style: const TextStyle(fontSize: 14.5),
-                      decoration: const InputDecoration(hintText: 'Give an instruction or create an agent…', isDense: true),
-                      onSubmitted: (_) => _send(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () => _send(),
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: const BoxDecoration(color: AppColors.indigo, shape: BoxShape.circle),
-                      child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          ChatComposer(controller: _controller, hint: 'Type your request...', onSend: () => _send(), onPlus: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attachments are coming soon')))),
         ],
       ),
+    );
+  }
+}
+
+/// The glowing orb on the empty Orchestrator room.
+class _Orb extends StatelessWidget {
+  const _Orb();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget ring(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF82A0FF).withOpacity(opacity)));
+    return SizedBox(
+      width: 220,
+      height: 220,
+      child: Stack(alignment: Alignment.center, children: [
+        ring(210, 0.07),
+        ring(172, 0.12),
+        Container(
+          width: 128,
+          height: 128,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const RadialGradient(center: Alignment(-0.2, -0.3), colors: [Color(0xFFBFD6FF), Color(0xFF8FB0FF), Color(0xFFC6B6FF), Color(0xFFE9E5FF)], stops: [0.0, 0.4, 0.75, 1.0]),
+            boxShadow: [BoxShadow(color: const Color(0xFF5A6EF0).withOpacity(0.35), blurRadius: 40, offset: const Offset(0, 18))],
+          ),
+          alignment: Alignment.center,
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), gradient: const LinearGradient(colors: [Color(0xFF6B8BFF), Color(0xFF4B5CF0)])),
+            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 26),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -174,7 +224,7 @@ class _OrchBubble extends StatelessWidget {
             Container(
               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.76),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(color: AppColors.indigo, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(gradient: AppColors.msgGradient, borderRadius: BorderRadius.circular(16)),
               child: Text(m.text, style: const TextStyle(color: Colors.white, fontSize: 14.5)),
             ),
             Padding(
@@ -182,7 +232,7 @@ class _OrchBubble extends StatelessWidget {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text(fmtTime(m.createdAt), style: const TextStyle(color: AppColors.textFaint, fontSize: 10.5)),
                 const SizedBox(width: 4),
-                const Icon(Icons.done_all_rounded, size: 13, color: AppColors.cyan),
+                const Icon(Icons.done_all_rounded, size: 13, color: AppColors.accent),
               ]),
             ),
           ],
@@ -202,7 +252,7 @@ class _OrchTag extends StatelessWidget {
     return Row(children: [
       const IndieMark(size: 16),
       const SizedBox(width: 6),
-      const Text('ORCHESTRATOR', style: TextStyle(color: AppColors.cyan, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+      const Text('ORCHESTRATOR', style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
       const Spacer(),
       Text(fmtTime(time), style: const TextStyle(color: AppColors.textFaint, fontSize: 10.5)),
     ]);
@@ -249,7 +299,7 @@ class _OrchCard extends StatelessWidget {
               if (((p['created'] as List?) ?? []).isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text('＋ Created ${(p['created'] as List).length} new agent(s): ${(p['created'] as List).join(', ')}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.cyan)),
+                    style: const TextStyle(fontSize: 11.5, color: AppColors.accent)),
               ],
             ],
             if (m.kind == OrchKind.agentCreated || m.kind == OrchKind.workflowUpdated) ...[

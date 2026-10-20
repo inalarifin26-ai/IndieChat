@@ -8,6 +8,7 @@ import '../models/workflow_models.dart';
 import '../models/consent_models.dart';
 import '../models/orchestrator_models.dart';
 import '../models/connector_models.dart';
+import '../models/vault_models.dart';
 
 const _tokenPrefsKey = 'indie_token';
 
@@ -17,6 +18,7 @@ class AppState extends ChangeNotifier {
   bool isBootstrapping = true;
   bool isAuthenticated = false;
   String? personalId;
+  String? displayName;
   String? lastError;
 
   final List<Contact> contacts = [];
@@ -32,6 +34,8 @@ class AppState extends ChangeNotifier {
   bool orchWaiting = false; // an instruction is in flight; the reply arrives via polling
 
   final List<Connector> connectors = [];
+  final List<VaultNote> notes = [];
+  final List<AgentMemory> memories = [];
 
   final Map<String, WorkflowExecution> _liveExecutions = {};
   final Map<String, StreamSubscription> _execSubs = {};
@@ -66,8 +70,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> register(String credential, {bool seedDemo = true}) async {
-    final res = await _api.post('/auth/register', {'credential': credential, 'seedDemo': seedDemo});
+  /// Creates the account. [chosenId] is the Indie ID picked on "Create Your ID"
+  /// (omit it to get a generated one). Throws [ApiException] 409 if taken.
+  Future<String> register(String credential, {bool seedDemo = true, String? chosenId}) async {
+    final res = await _api.post('/auth/register', {
+      'credential': credential,
+      'seedDemo': seedDemo,
+      if (chosenId != null && chosenId.trim().isNotEmpty) 'personalId': chosenId.trim(),
+    });
     await _persistToken(res['token'] as String);
     personalId = res['personalId'] as String;
     isAuthenticated = true;
@@ -107,6 +117,9 @@ class AppState extends ChangeNotifier {
     _api.token = null;
     isAuthenticated = false;
     personalId = null;
+    displayName = null;
+    notes.clear();
+    memories.clear();
     contacts.clear();
     agents.clear();
     workflows.clear();
@@ -131,7 +144,19 @@ class AppState extends ChangeNotifier {
     await prefs.setString(_tokenPrefsKey, token);
   }
 
+  /// Re-fetches everything (used by refresh buttons).
+  Future<void> refreshAll() async {
+    try {
+      await _loadAll();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   Future<void> _loadAll() async {
+    try {
+      final me = await _api.get('/auth/me');
+      displayName = me['displayName'] as String?;
+    } catch (_) {}
     final results = await Future.wait([
       _api.get('/contacts'),
       _api.get('/agents'),
@@ -235,7 +260,29 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------------- Create Your ID / profile ----------------
+
+  /// Live availability check while typing an Indie ID (works before an account exists).
+  Future<Map<String, dynamic>> checkIdAvailable(String id) async {
+    final res = await _api.get('/auth/id-available?id=${Uri.encodeQueryComponent(id)}');
+    return res as Map<String, dynamic>;
+  }
+
+  Future<List<String>> idSuggestions() async {
+    final res = await _api.get('/auth/id-suggestions');
+    return ((res['suggestions'] as List?) ?? []).map((e) => e.toString()).toList();
+  }
+
+  Future<void> updateDisplayName(String name) async {
+    final res = await _api.patch('/auth/me', {'displayName': name});
+    displayName = res['displayName'] as String?;
+    notifyListeners();
+  }
+
   // ---------------- Messaging: contacts (people only) ----------------
+
+  List<Contact> get people => contacts.where((c) => !c.isGroup).toList();
+  List<Contact> get groups => contacts.where((c) => c.isGroup).toList();
 
   Future<Contact> addContact({required String name, required String info, String group = ''}) async {
     final json = await _api.post('/contacts', {'name': name, 'info': info, 'group': group});
@@ -245,8 +292,11 @@ class AppState extends ChangeNotifier {
     return c;
   }
 
-  Future<void> updateContact(String id, {String? name, String? info, String? group, bool? muted, bool? pinned}) async {
+  Future<void> updateContact(String id, {String? name, String? info, String? group, bool? muted, bool? pinned, String? description, String? visibility, bool? allowNewMembers}) async {
     final json = await _api.patch('/contacts/$id', {
+      if (description != null) 'description': description,
+      if (visibility != null) 'visibility': visibility,
+      if (allowNewMembers != null) 'allowNewMembers': allowNewMembers,
       if (name != null) 'name': name,
       if (info != null) 'info': info,
       if (group != null) 'group': group,
@@ -262,6 +312,82 @@ class AppState extends ChangeNotifier {
       ..addAll(old.messages);
     fresh.historyLoaded = old.historyLoaded;
     contacts[i] = fresh;
+    notifyListeners();
+  }
+
+  // ---------------- Groups ----------------
+
+  void _replaceContact(Map<String, dynamic> json) {
+    final fresh = Contact.fromApi(json);
+    final i = contacts.indexWhere((c) => c.id == fresh.id);
+    if (i == -1) {
+      contacts.add(fresh);
+      return;
+    }
+    fresh.messages
+      ..clear()
+      ..addAll(contacts[i].messages);
+    fresh.historyLoaded = contacts[i].historyLoaded;
+    contacts[i] = fresh;
+  }
+
+  Future<Contact> createGroup({required String name, String description = '', String visibility = 'private', bool allowNewMembers = true, List<String> memberIds = const []}) async {
+    final json = await _api.post('/groups', {'name': name, 'description': description, 'visibility': visibility, 'allowNewMembers': allowNewMembers, 'memberIds': memberIds});
+    _replaceContact(json as Map<String, dynamic>);
+    notifyListeners();
+    return contacts.firstWhere((c) => c.id == json['id'].toString());
+  }
+
+  Future<void> addGroupMembers(String groupId, List<String> contactIds) async {
+    final json = await _api.post('/groups/$groupId/members', {'contactIds': contactIds});
+    _replaceContact(json as Map<String, dynamic>);
+    await refreshContactMessages(groupId, force: true);
+    notifyListeners();
+  }
+
+  Future<void> removeGroupMember(String groupId, String contactId) async {
+    final json = await _api.delete('/groups/$groupId/members/$contactId');
+    _replaceContact(json as Map<String, dynamic>);
+    await refreshContactMessages(groupId, force: true);
+    notifyListeners();
+  }
+
+  // ---------------- Search ----------------
+
+  Future<SearchResults> search(String query, {String? scope}) async {
+    if (query.trim().isEmpty) return const SearchResults();
+    final qs = 'q=${Uri.encodeQueryComponent(query.trim())}${scope != null ? '&scope=$scope' : ''}';
+    final res = await _api.get('/search?$qs');
+    return SearchResults.fromApi(res as Map<String, dynamic>);
+  }
+
+  // ---------------- Vault: notes & memories ----------------
+
+  Future<void> loadNotes() async {
+    final list = await _api.get('/vault/notes') as List;
+    notes
+      ..clear()
+      ..addAll(list.map((j) => VaultNote.fromApi(j as Map<String, dynamic>)));
+    notifyListeners();
+  }
+
+  Future<void> addNote(String title, String body) async {
+    final json = await _api.post('/vault/notes', {'title': title, 'body': body});
+    notes.insert(0, VaultNote.fromApi(json as Map<String, dynamic>));
+    notifyListeners();
+  }
+
+  Future<void> deleteNote(String id) async {
+    await _api.delete('/vault/notes/$id');
+    notes.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
+
+  Future<void> loadMemories() async {
+    final list = await _api.get('/vault/memories') as List;
+    memories
+      ..clear()
+      ..addAll(list.map((j) => AgentMemory.fromApi(j as Map<String, dynamic>)));
     notifyListeners();
   }
 
@@ -591,11 +717,21 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateNodeConfig(String workflowId, String nodeId, {required String title, required String subtitle}) async {
-    await _api.patch('/workflows/$workflowId/nodes/$nodeId', {'title': title, 'subtitle': subtitle});
+  /// [condition] sets a logic node's branch condition; [clearCondition] removes it (back to the default).
+  Future<void> updateNodeConfig(String workflowId, String nodeId, {required String title, required String subtitle, Map<String, dynamic>? condition, bool clearCondition = false}) async {
+    await _api.patch('/workflows/$workflowId/nodes/$nodeId', {
+      'title': title,
+      'subtitle': subtitle,
+      if (clearCondition) 'condition': null else if (condition != null) 'condition': condition,
+    });
     final node = workflows.firstWhere((w) => w.id == workflowId).nodes.firstWhere((n) => n.id == nodeId);
     node.title = title;
     node.subtitle = subtitle;
+    if (clearCondition) {
+      node.condition = null;
+    } else if (condition != null) {
+      node.condition = condition;
+    }
     notifyListeners();
   }
 
@@ -690,6 +826,23 @@ class AppState extends ChangeNotifier {
     }, onError: (_) {});
   }
 
+  /// Stops a running (or approval-paused) run. Nodes that had not finished become cancelled.
+  Future<void> cancelWorkflowRun(String workflowId) async {
+    final exec = _liveExecutions[workflowId];
+    if (exec == null) return;
+    await _api.post('/workflows/executions/${exec.id}/cancel');
+    exec.state = ExecutionState.cancelled;
+    final wf = workflows.where((w) => w.id == workflowId);
+    if (wf.isNotEmpty) {
+      for (final n in wf.first.nodes) {
+        if (n.state == NodeRuntimeState.running || n.state == NodeRuntimeState.idle || n.state == NodeRuntimeState.waiting || n.state == NodeRuntimeState.queued) {
+          n.state = NodeRuntimeState.cancelled;
+        }
+      }
+    }
+    notifyListeners();
+  }
+
   // ---------------- Connectors (external services, OAuth) ----------------
 
   Future<void> loadConnectors() async {
@@ -721,9 +874,11 @@ class AppState extends ChangeNotifier {
     required bool aiSummary,
     required bool rawData,
     required bool agentActivity,
+    String format = 'pdf',
   }) async {
     final res = await _api.post('/vault/outputs/$outputId/share', {
       'recipient': recipient,
+      'format': format.toLowerCase(),
       'include': {'report': report, 'aiSummary': aiSummary, 'rawData': rawData, 'agentActivity': agentActivity},
     });
     outputs.firstWhere((o) => o.id == outputId).shared = true;

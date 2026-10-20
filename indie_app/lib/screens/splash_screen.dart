@@ -4,7 +4,7 @@ import '../core/theme/app_colors.dart';
 import '../state/app_state.dart';
 import '../widgets/indie_logo.dart';
 import 'root_shell.dart';
-import 'onboarding_screen.dart';
+import 'auth/welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final remaining = 700 - stopwatch.elapsedMilliseconds;
     if (remaining > 0) await Future.delayed(Duration(milliseconds: remaining));
     if (!mounted) return;
-    final destination = state.isAuthenticated ? const RootShell() : const OnboardingScreen();
+    final destination = state.isAuthenticated ? const RootShell() : const WelcomeScreen();
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(
               width: 22,
               height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.cyan.withOpacity(0.8)),
+              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.accent.withOpacity(0.8)),
             ),
           ],
         ),

@@ -15,6 +15,15 @@ class MessageBubble extends StatelessWidget {
   final ValueChanged<String>? onJumpTo;
   final ValueChanged<String>? onReact;
 
+  /// Group chats: show who said it above incoming messages.
+  final bool showSender;
+
+  /// Enables the "Save to Vault" button on result cards.
+  final VoidCallback? onSaveCard;
+
+  /// Enables the "View Full Report" button on result cards.
+  final VoidCallback? onViewReport;
+
   const MessageBubble({
     super.key,
     required this.message,
@@ -23,6 +32,9 @@ class MessageBubble extends StatelessWidget {
     this.onOutputTap,
     this.onJumpTo,
     this.onReact,
+    this.showSender = false,
+    this.onSaveCard,
+    this.onViewReport,
   });
 
   @override
@@ -33,8 +45,8 @@ class MessageBubble extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(12)),
-          child: Text(m.text, style: const TextStyle(color: AppColors.textFaint, fontSize: 11.5), textAlign: TextAlign.center),
+          decoration: BoxDecoration(color: AppColors.surfaceRaised, borderRadius: BorderRadius.circular(12)),
+          child: Text(m.text, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5), textAlign: TextAlign.center),
         ),
       );
     }
@@ -45,6 +57,14 @@ class MessageBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
+          if (showSender && !mine && m.from != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 3),
+              child: Text.rich(TextSpan(children: [
+                TextSpan(text: m.from!, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                TextSpan(text: '  ${dayLabel(m.timestamp)} ${fmtTime(m.timestamp)}', style: const TextStyle(color: AppColors.textSecondary)),
+              ]), style: const TextStyle(fontSize: 11.5)),
+            ),
           GestureDetector(
             onTap: m.deleted ? null : onOpen,
             child: ConstrainedBox(
@@ -53,6 +73,7 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
           if (!m.deleted && m.reactions.isNotEmpty) _reactions(),
+          if (!(showSender && !mine && m.from != null))
           Padding(
             padding: const EdgeInsets.only(top: 3, left: 4, right: 4),
             child: Row(
@@ -64,7 +85,7 @@ class MessageBubble extends StatelessWidget {
                   Icon(
                     m.status == 'sent' ? Icons.done_rounded : Icons.done_all_rounded,
                     size: 13,
-                    color: m.status == 'read' ? AppColors.cyan : AppColors.textFaint,
+                    color: m.status == 'read' ? AppColors.accent : AppColors.textFaint,
                   ),
                 ],
               ],
@@ -93,16 +114,16 @@ class MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: mine ? Colors.black.withOpacity(0.18) : Colors.white.withOpacity(0.06),
+          color: mine ? Colors.black.withOpacity(0.16) : AppColors.surfaceRaised,
           borderRadius: BorderRadius.circular(8),
-          border: Border(left: BorderSide(color: mine ? Colors.white : AppColors.cyan, width: 3)),
+          border: Border(left: BorderSide(color: mine ? Colors.white : AppColors.accent, width: 3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(r.sender == SenderKind.user ? 'You' : (r.sender == SenderKind.agent ? 'Agent' : 'Contact'),
-                style: TextStyle(color: mine ? Colors.white : AppColors.cyan, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                style: TextStyle(color: mine ? Colors.white : AppColors.accent, fontSize: 10.5, fontWeight: FontWeight.w700)),
             Text(r.snippet, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
           ],
         ),
@@ -116,15 +137,14 @@ class MessageBubble extends StatelessWidget {
     if (m.deleted) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.stroke)),
         child: const Text('🚫 Message deleted', style: TextStyle(color: AppColors.textFaint, fontStyle: FontStyle.italic, fontSize: 13)),
       );
     }
     switch (m.kind) {
       case MessageKind.file:
         final f = m.payload?['file'] as Map<String, dynamic>?;
-        return _bubbleShell(
-          mine,
+        return _whiteShell(
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -165,6 +185,8 @@ class MessageBubble extends StatelessWidget {
           insights: (c?['insights'] as List?)?.cast<dynamic>(),
           saved: m.saved,
           quote: _quote(mine),
+          onView: onViewReport,
+          onSave: onSaveCard,
         );
       default:
         return _bubbleShell(mine, Text(m.text, style: TextStyle(color: mine ? Colors.white : AppColors.textPrimary, fontSize: 14.5)), quote: _quote(mine));
@@ -175,7 +197,9 @@ class MessageBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: mine ? AppColors.indigo : AppColors.surfaceCard,
+        gradient: mine ? AppColors.msgGradient : null,
+        color: mine ? null : AppColors.surface,
+        border: mine ? null : Border.all(color: AppColors.stroke),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(16),
           topRight: const Radius.circular(16),
@@ -187,11 +211,20 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _resultCard({required String title, String? note, List<List>? metrics, List? insights, bool saved = false, Widget? quote, VoidCallback? onView}) {
+  /// A white tile (file attachments), identical for both sides like on the reference screens.
+  Widget _whiteShell(Widget child, {Widget? quote}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.stroke)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [if (quote != null) quote, child]),
+    );
+  }
+
+  Widget _resultCard({required String title, String? note, List<List>? metrics, List? insights, bool saved = false, Widget? quote, VoidCallback? onView, VoidCallback? onSave}) {
     return Container(
       padding: const EdgeInsets.all(13),
       constraints: const BoxConstraints(minWidth: 220),
-      decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.stroke)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.stroke)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -201,35 +234,34 @@ class MessageBubble extends StatelessWidget {
           if (note != null) ...[const SizedBox(height: 4), Text(note, style: const TextStyle(fontSize: 11, color: AppColors.textFaint))],
           if (metrics != null) ...[
             const SizedBox(height: 9),
-            Row(
-              children: metrics
-                  .map((row) => Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(10)),
+            LayoutBuilder(builder: (context, box) {
+              final w = (box.maxWidth - 8) / 2;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: metrics
+                    .map((row) => Container(
+                          width: w,
+                          padding: const EdgeInsets.all(9),
+                          decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(11)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(row[0].toString(), style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
-                              Row(children: [
-                                Text(row[1].toString(), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                                if (row.length > 2 && row[2].toString().isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4),
-                                    child: Text(row[2].toString(), style: const TextStyle(fontSize: 10.5, color: AppColors.success)),
-                                  ),
-                              ]),
+                              Text(row[0].toString(), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                              Text(row[1].toString(), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                              if (row.length > 2 && row[2].toString().isNotEmpty) Text(row[2].toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success)),
                             ],
                           ),
-                        ),
-                      ))
-                  .toList(),
-            ),
+                        ))
+                    .toList(),
+              );
+            }),
           ],
           if (insights != null) ...[
-            const SizedBox(height: 9),
+            const SizedBox(height: 10),
+            const Text('Key Insights', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
             ...insights.map((i) => Padding(
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Text('•  $i', style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
@@ -244,7 +276,7 @@ class MessageBubble extends StatelessWidget {
               if (metrics != null || insights != null)
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: null,
+                    onPressed: saved ? null : onSave,
                     style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 10), textStyle: const TextStyle(fontSize: 11.5)),
                     child: Text(saved ? 'Saved ✓' : 'Save to Vault'),
                   ),
@@ -272,7 +304,7 @@ class MessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceCard,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: mine ? AppColors.cyan : AppColors.stroke),
+                border: Border.all(color: mine ? AppColors.accent : AppColors.stroke),
               ),
               child: Text('${e.key} ${e.value}', style: const TextStyle(fontSize: 11.5)),
             ),
@@ -291,7 +323,7 @@ class TypingBubble extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.stroke)),
         child: const SizedBox(width: 28, height: 10, child: _Dots()),
       ),
     );
@@ -338,8 +370,8 @@ class DateSeparator extends StatelessWidget {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 3),
-          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(10)),
-          child: Text(label, style: const TextStyle(color: AppColors.textFaint, fontSize: 10.5, fontWeight: FontWeight.w600)),
+          decoration: BoxDecoration(color: AppColors.surfaceRaised, borderRadius: BorderRadius.circular(10)),
+          child: Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
         ),
       ),
     );

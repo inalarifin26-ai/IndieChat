@@ -33,7 +33,7 @@ function serializeContact(row) {
     muted: !!row.muted,
     unread: row.unread || 0,
     lastMessage: last
-      ? { sender: last.sender, kind: last.kind || 'text', text: snippet(last), status: last.status || null, deleted: !!last.deleted, createdAt: last.created_at }
+      ? { sender: last.sender, from: last.sender_name || null, kind: last.kind || 'text', text: snippet(last), status: last.status || null, deleted: !!last.deleted, createdAt: last.created_at }
       : null,
   };
 }

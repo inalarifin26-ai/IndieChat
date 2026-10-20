@@ -126,7 +126,7 @@ class _ConnectorManagerScreenState extends State<ConnectorManagerScreen> with Wi
               ...state.connectors.map((c) => Card(
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
-                      leading: Icon(_iconFor(c.provider), color: c.connected ? AppColors.cyan : AppColors.textFaint),
+                      leading: Icon(_iconFor(c.provider), color: c.connected ? AppColors.accent : AppColors.textFaint),
                       title: Text(c.displayName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       subtitle: Text(c.subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textFaint)),
                       trailing: !c.configured

@@ -43,6 +43,9 @@ class ChatMessage {
   final Map<String, dynamic>? payload; // file / output / card / approval metadata
   final ReplyRef? replyTo;
 
+  /// Which group member said it (group chats only).
+  final String? from;
+
   /// Delivery status for messages you sent in contact chats: sent | delivered | read.
   String? status;
   Map<String, int> reactions;
@@ -57,6 +60,7 @@ class ChatMessage {
     this.kind = MessageKind.text,
     this.payload,
     this.replyTo,
+    this.from,
     this.status,
     Map<String, int>? reactions,
     this.myReaction,
@@ -119,6 +123,7 @@ class ChatMessage {
       replyTo: reply == null
           ? null
           : ReplyRef(id: reply['id'].toString(), sender: senderFromApi(reply['sender'] as String?), snippet: reply['snippet'] as String? ?? ''),
+      from: json['from'] as String?,
       status: json['status'] as String?,
       reactions: rx,
       myReaction: json['myReaction'] as String?,
@@ -129,7 +134,21 @@ class ChatMessage {
   }
 }
 
-/// A human contact — strictly separate from Agents in the UI.
+/// A member of a group chat (one of the user's own contacts).
+class GroupMember {
+  final String id;
+  final String name;
+  final String initials;
+  const GroupMember({required this.id, required this.name, required this.initials});
+
+  factory GroupMember.fromApi(Map<String, dynamic> json) => GroupMember(
+        id: json['id'].toString(),
+        name: json['name'] as String? ?? '',
+        initials: json['initials'] as String? ?? '?',
+      );
+}
+
+/// A human contact or a group chat — strictly separate from Agents in the UI.
 class Contact {
   final String id;
   String name;
@@ -143,6 +162,16 @@ class Contact {
   int unread;
   bool historyLoaded;
 
+  /// 'person' or 'group'. Groups are made of the user's own contacts.
+  final String kind;
+  String description;
+  String visibility; // groups: public | private
+  bool allowNewMembers;
+  int memberCount;
+  final List<GroupMember> members;
+
+  bool get isGroup => kind == 'group';
+
   Contact({
     required this.id,
     required this.name,
@@ -155,7 +184,14 @@ class Contact {
     this.muted = false,
     this.unread = 0,
     this.historyLoaded = false,
-  }) : messages = messages ?? [];
+    this.kind = 'person',
+    this.description = '',
+    this.visibility = 'private',
+    this.allowNewMembers = true,
+    this.memberCount = 0,
+    List<GroupMember>? members,
+  })  : messages = messages ?? [],
+        members = members ?? [];
 
   ChatMessage? get lastMessage => messages.isEmpty ? null : messages.last;
 
@@ -171,6 +207,12 @@ class Contact {
       pinned: json['pinned'] as bool? ?? false,
       muted: json['muted'] as bool? ?? false,
       unread: (json['unread'] as num?)?.toInt() ?? 0,
+      kind: json['kind'] as String? ?? 'person',
+      description: json['description'] as String? ?? '',
+      visibility: json['visibility'] as String? ?? 'private',
+      allowNewMembers: json['allowNewMembers'] as bool? ?? true,
+      memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
+      members: ((json['members'] as List?) ?? []).map((m) => GroupMember.fromApi(m as Map<String, dynamic>)).toList(),
       // A one-message preview; the full history is fetched when the chat opens.
       messages: last == null
           ? []
@@ -178,6 +220,7 @@ class Contact {
               ChatMessage(
                 id: 'preview',
                 sender: senderFromApi(last['sender'] as String?),
+                from: last['from'] as String?,
                 text: last['text'] as String? ?? '',
                 status: last['status'] as String?,
                 deleted: last['deleted'] as bool? ?? false,

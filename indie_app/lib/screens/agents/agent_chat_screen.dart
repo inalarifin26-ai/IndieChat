@@ -8,6 +8,7 @@ import '../../widgets/common.dart';
 import '../../widgets/consent_sheet.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/message_action_sheet.dart';
+import '../messages/messages_list_screen.dart' show agentStatusLine;
 import 'agent_dashboard_screen.dart';
 import 'orchestrator_screen.dart';
 
@@ -122,8 +123,8 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(agent.name, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700)),
-                    Text(agent.role, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                    Text(agent.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    agentStatusLine(agent, suffix: 'AI Agent'),
                   ],
                 ),
               ),
@@ -132,7 +133,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.dashboard_customize_outlined),
+            icon: const Icon(Icons.more_vert_rounded),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AgentDashboardScreen(agentId: agent.id))),
           ),
         ],
@@ -164,6 +165,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                           onJumpTo: _jumpTo,
                           onReact: (e) => context.read<AppState>().reactAgentMessage(widget.agentId, m.id, e),
                           onOutputTap: () => _askOrchestrator(agent.name),
+                          onSaveCard: m.kind == MessageKind.card ? () => context.read<AppState>().saveAgentMessage(widget.agentId, m.id) : null,
                         ),
                       ),
                     ],
@@ -187,14 +189,14 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
               decoration: const BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.stroke))),
               child: Row(
                 children: [
-                  Container(width: 3, height: 30, color: AppColors.cyan),
+                  Container(width: 3, height: 30, color: AppColors.accent),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Replying', style: TextStyle(color: AppColors.cyan, fontSize: 11, fontWeight: FontWeight.w700)),
+                        const Text('Replying', style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.w700)),
                         Text(_replyTo!.snippet, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
                       ],
                     ),
@@ -214,9 +216,9 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          _Composer(
+          ChatComposer(
             controller: _controller,
-            onAttach: () => showAttachSheet(
+            onPlus: () => showAttachSheet(
               context,
               onFile: () => _send(kind: MessageKind.file, payload: {
                 'file': {'name': 'Campaign-Report.pdf', 'size': '2.4 MB'}
@@ -227,10 +229,11 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
               vaultOutputs: state.outputs,
               onPickOutput: (o) => _send(kind: MessageKind.output, outputId: o.id as String),
             ),
-            onSend: (t) {
-              if (t.trim().isEmpty) return;
+            onSend: () {
+              final t = _controller.text.trim();
+              if (t.isEmpty) return;
               _controller.clear();
-              _send(text: t.trim());
+              _send(text: t);
             },
           ),
         ],
@@ -247,33 +250,46 @@ String _dayLabel(DateTime t) {
   return '${t.day}/${t.month}';
 }
 
-class _ScopeBanner extends StatelessWidget {
+class _ScopeBanner extends StatefulWidget {
   final List<String> workflow;
   final VoidCallback onChange;
   const _ScopeBanner({required this.workflow, required this.onChange});
 
   @override
+  State<_ScopeBanner> createState() => _ScopeBannerState();
+}
+
+class _ScopeBannerState extends State<_ScopeBanner> {
+  bool _open = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (workflow.isEmpty) return const SizedBox.shrink();
+    if (widget.workflow.isEmpty) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(color: AppColors.cyan.withOpacity(0.08), borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.cyan.withOpacity(0.35))),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      decoration: BoxDecoration(color: const Color(0xFFEDF3FF), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFD5E3FF))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
-            Icon(Icons.lock_rounded, size: 14, color: AppColors.cyan),
-            SizedBox(width: 6),
-            Text('Workflow defined by Orchestrator', style: TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 6),
-          ...workflow.map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text('•  $s', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              )),
-          const SizedBox(height: 6),
-          InkWell(onTap: onChange, child: const Text('Change workflow → ask Orchestrator', style: TextStyle(color: AppColors.cyan, fontSize: 11.5, fontWeight: FontWeight.w700))),
+          InkWell(
+            onTap: () => setState(() => _open = !_open),
+            child: Row(children: [
+              const Icon(Icons.lock_outline_rounded, size: 15, color: AppColors.indigo),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Workflow set by Orchestrator · ${widget.workflow.length} steps', style: const TextStyle(color: AppColors.indigo, fontSize: 12, fontWeight: FontWeight.w700))),
+              Icon(_open ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 18, color: AppColors.indigo),
+            ]),
+          ),
+          if (_open) ...[
+            const SizedBox(height: 8),
+            ...widget.workflow.map((s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text('•  $s', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                )),
+            const SizedBox(height: 6),
+            InkWell(onTap: widget.onChange, child: const Text('Change workflow → ask Orchestrator', style: TextStyle(color: AppColors.indigo, fontSize: 11.5, fontWeight: FontWeight.w700))),
+          ],
         ],
       ),
     );
@@ -290,7 +306,7 @@ class _ApprovalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.approval.withOpacity(0.45)),
       ),
@@ -329,48 +345,6 @@ class _ApprovalCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Composer extends StatelessWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onSend;
-  final VoidCallback onAttach;
-  const _Composer({required this.controller, required this.onSend, required this.onAttach});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(6, 8, 10, 8),
-        decoration: const BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.stroke))),
-        child: Row(
-          children: [
-            IconButton(icon: const Icon(Icons.attach_file_rounded, color: AppColors.textSecondary), onPressed: onAttach),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                style: const TextStyle(fontSize: 14.5),
-                decoration: const InputDecoration(hintText: 'Message your agent…', isDense: true),
-                onSubmitted: onSend,
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              borderRadius: BorderRadius.circular(24),
-              onTap: () => onSend(controller.text),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_upward_rounded, color: AppColors.ink, size: 20),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

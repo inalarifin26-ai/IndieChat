@@ -57,9 +57,9 @@ class WirePainter extends CustomPainter {
       if (isActive && pulseValue != null) {
         final t = pulseValue!;
         final pos = Offset.lerp(start, end, t)!;
-        final glow = Paint()..color = AppColors.cyan.withOpacity(0.9);
+        final glow = Paint()..color = AppColors.accent.withOpacity(0.9);
         canvas.drawCircle(pos, 4.2, glow);
-        final glowOuter = Paint()..color = AppColors.cyan.withOpacity(0.25);
+        final glowOuter = Paint()..color = AppColors.accent.withOpacity(0.25);
         canvas.drawCircle(pos, 9, glowOuter);
       }
 

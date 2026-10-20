@@ -42,32 +42,38 @@ class _RootShellState extends State<RootShell> {
             child: Row(
               children: [
                 _NavItem(
-                  icon: Icons.forum_rounded,
-                  label: 'Messages',
+                  icon: Icons.chat_bubble_outline_rounded,
+                  selectedIcon: Icons.chat_bubble_rounded,
+                  label: 'Message',
                   selected: _index == 0,
+                  badge: state.contacts.fold<int>(0, (a, c) => a + c.unread),
                   onTap: () => setState(() => _index = 0),
                 ),
                 _NavItem(
-                  icon: Icons.auto_awesome_rounded,
+                  icon: Icons.person_outline_rounded,
+                  selectedIcon: Icons.person_rounded,
                   label: 'Agents',
                   selected: _index == 1,
                   badge: state.agentsNeedingAttention,
                   onTap: () => setState(() => _index = 1),
                 ),
                 _NavItem(
-                  icon: Icons.account_tree_rounded,
-                  label: 'Workflows',
+                  icon: Icons.account_tree_outlined,
+                  selectedIcon: Icons.account_tree_rounded,
+                  label: 'Flow',
                   selected: _index == 2,
                   onTap: () => setState(() => _index = 2),
                 ),
                 _NavItem(
-                  icon: Icons.inventory_2_rounded,
+                  icon: Icons.verified_user_outlined,
+                  selectedIcon: Icons.verified_user_rounded,
                   label: 'Vault',
                   selected: _index == 3,
                   onTap: () => setState(() => _index = 3),
                 ),
                 _NavItem(
-                  icon: Icons.more_horiz_rounded,
+                  icon: Icons.apps_rounded,
+                  selectedIcon: Icons.apps_rounded,
                   label: 'More',
                   selected: _index == 4,
                   onTap: () => setState(() => _index = 4),
@@ -83,6 +89,7 @@ class _RootShellState extends State<RootShell> {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData? selectedIcon;
   final String label;
   final bool selected;
   final int badge;
@@ -93,12 +100,13 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.selectedIcon,
     this.badge = 0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.cyan : AppColors.textFaint;
+    final color = selected ? AppColors.indigo : AppColors.textFaint;
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -108,7 +116,7 @@ class _NavItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(icon, color: color, size: 22),
+                Icon(selected ? (selectedIcon ?? icon) : icon, color: color, size: 23),
                 if (badge > 0)
                   Positioned(
                     right: -6,

@@ -25,7 +25,7 @@ class AgentDashboardScreen extends StatelessWidget {
           title: Text(agent.name),
           bottom: const TabBar(
             isScrollable: true,
-            indicatorColor: AppColors.cyan,
+            indicatorColor: AppColors.accent,
             labelColor: AppColors.textPrimary,
             unselectedLabelColor: AppColors.textFaint,
             tabs: [
@@ -50,7 +50,7 @@ class AgentDashboardScreen extends StatelessWidget {
                           children: [
                             const Padding(
                               padding: EdgeInsets.only(top: 5),
-                              child: Icon(Icons.circle, size: 6, color: AppColors.cyan),
+                              child: Icon(Icons.circle, size: 6, color: AppColors.accent),
                             ),
                             const SizedBox(width: 10),
                             Expanded(child: Text(e, style: const TextStyle(fontSize: 13.5, color: AppColors.textSecondary))),
@@ -96,7 +96,7 @@ class AgentDashboardScreen extends StatelessWidget {
                 ...agent.workflow.asMap().entries.map((e) => Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
-                        leading: CircleAvatar(radius: 12, backgroundColor: AppColors.cyan.withOpacity(0.15), child: Text('${e.key + 1}', style: const TextStyle(fontSize: 11, color: AppColors.cyan, fontWeight: FontWeight.w700))),
+                        leading: CircleAvatar(radius: 12, backgroundColor: AppColors.accent.withOpacity(0.15), child: Text('${e.key + 1}', style: const TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w700))),
                         title: Text(e.value, style: const TextStyle(fontSize: 13.5)),
                       ),
                     )),
@@ -145,7 +145,7 @@ class _OverviewTab extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                const Icon(Icons.bolt_rounded, color: AppColors.cyan, size: 20),
+                const Icon(Icons.bolt_rounded, color: AppColors.accent, size: 20),
                 const SizedBox(width: 10),
                 Expanded(child: Text(agent.currentActivity, style: const TextStyle(fontSize: 13.5))),
               ],

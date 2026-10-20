@@ -53,3 +53,7 @@ here as production-ready.
 
 MIT — see [LICENSE](LICENSE). Replace or remove before any public release if
 you'd prefer different terms.
+
+## Interactive preview
+
+`indie_preview.html` is a single-file, clickable preview of the redesigned UI (open it in any browser). Its sources are in `preview/` (`python3 preview/build.py` rebuilds it); `preview/test_preview.js` is a headless-browser test that drives the real flows.

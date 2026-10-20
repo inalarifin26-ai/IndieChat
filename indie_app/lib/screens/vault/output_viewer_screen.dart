@@ -20,19 +20,19 @@ class OutputViewerScreen extends StatelessWidget {
         children: [
           Text(o.summary, style: const TextStyle(fontSize: 15, height: 1.4)),
           const SizedBox(height: 18),
-          _block('AI Summary', o.aiSummary, Icons.auto_awesome_rounded, AppColors.cyan),
+          _block('AI Summary', o.aiSummary, Icons.auto_awesome_rounded, AppColors.accent),
           _block('Raw data', o.rawDataPreview, Icons.dataset_outlined, AppColors.textFaint),
           _blockList('Agent activity', o.agentActivity, Icons.timeline_rounded, AppColors.agentAccent),
           const SizedBox(height: 24),
           if (o.shared)
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.cyan.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
               child: const Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: AppColors.cyan, size: 18),
+                  Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 18),
                   SizedBox(width: 8),
-                  Text('Already shared', style: TextStyle(color: AppColors.cyan, fontSize: 12.5)),
+                  Text('Already shared', style: TextStyle(color: AppColors.accent, fontSize: 12.5)),
                 ],
               ),
             ),
@@ -43,7 +43,7 @@ class OutputViewerScreen extends StatelessWidget {
               isScrollControlled: true,
               builder: (_) => ShareResultSheet(
                 output: o,
-                onShared: ({required report, required aiSummary, required rawData, required agentActivity, recipient}) async {
+                onShared: ({required report, required aiSummary, required rawData, required agentActivity, required format, recipient}) async {
                   try {
                     await context.read<AppState>().shareOutput(
                           o.id,
@@ -52,6 +52,7 @@ class OutputViewerScreen extends StatelessWidget {
                           aiSummary: aiSummary,
                           rawData: rawData,
                           agentActivity: agentActivity,
+                          format: format,
                         );
                   } catch (e) {
                     if (context.mounted) {

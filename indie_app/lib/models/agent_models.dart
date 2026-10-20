@@ -70,5 +70,20 @@ class Agent {
         permissions: ((json['permissions'] as List?) ?? []).map((p) => AgentPermission(p.toString())).toList(),
         workflow: ((json['workflow'] as List?) ?? []).map((e) => e.toString()).toList(),
         apiNeedsAttention: json['needsAttention'] as bool? ?? false,
+        // A one-message preview for the unified Messages list; the full history loads when the chat opens.
+        messages: _preview(json['lastMessage'] as Map<String, dynamic>?),
       );
+
+  static List<ChatMessage> _preview(Map<String, dynamic>? last) {
+    if (last == null) return [];
+    return [
+      ChatMessage(
+        id: 'preview',
+        sender: senderFromApi(last['sender'] as String?),
+        text: last['text'] as String? ?? '',
+        deleted: last['deleted'] as bool? ?? false,
+        timestamp: DateTime.tryParse(last['createdAt']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      ),
+    ];
+  }
 }

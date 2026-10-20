@@ -14,7 +14,7 @@ class NodeCard extends StatelessWidget {
       case NodeRuntimeState.success:
         return AppColors.success;
       case NodeRuntimeState.running:
-        return AppColors.cyan;
+        return AppColors.accent;
       case NodeRuntimeState.waiting:
         return AppColors.approval;
       case NodeRuntimeState.error:
@@ -36,7 +36,7 @@ class NodeCard extends StatelessWidget {
         return const SizedBox(
           width: 13,
           height: 13,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
         );
       case NodeRuntimeState.waiting:
         return const Icon(Icons.lock_clock_rounded, size: 14, color: AppColors.approval);

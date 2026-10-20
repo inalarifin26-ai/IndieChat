@@ -6,7 +6,7 @@ const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } 
   const browser = await puppeteer.launch({ args: [...chromium.args, '--no-sandbox'], executablePath: await chromium.executablePath(), headless: 'shell' });
   const page = await browser.newPage(); await page.setViewport({ width: 390, height: 844 });
   const errs = []; page.on('pageerror', e => errs.push(String(e).slice(0, 200)));
-  await page.goto('file:///home/claude/work/indie_preview.html', { waitUntil: 'load' });
+  await page.goto('file:///home/claude/work/indie/indie_preview.html', { waitUntil: 'load' });
   const ev = (js) => page.evaluate(js), wait = ms => new Promise(r => setTimeout(r, ms));
   const click = async sel => { await page.click(sel); await wait(120); };
 

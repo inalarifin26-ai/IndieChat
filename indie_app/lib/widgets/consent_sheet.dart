@@ -67,7 +67,7 @@ class ConsentSheet extends StatelessWidget {
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppColors.surfaceRaised, borderRadius: BorderRadius.circular(12)),
               child: const Row(
                 children: [
                   Icon(Icons.info_outline_rounded, size: 15, color: AppColors.textFaint),

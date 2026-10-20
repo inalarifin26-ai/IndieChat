@@ -34,7 +34,7 @@ class WorkflowsListScreen extends StatelessWidget {
       case WorkflowLifecycle.draft:
         return AppColors.textFaint;
       default:
-        return AppColors.cyan;
+        return AppColors.accent;
     }
   }
 
@@ -43,7 +43,7 @@ class WorkflowsListScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workflows'),
+        title: const Text('Flow'),
         actions: [
           IconButton(
             tooltip: 'New workflow',

@@ -79,6 +79,10 @@ class WorkflowNode {
   NodeRuntimeState state;
   bool disabled;
 
+  /// Logic nodes only: how the node picks a branch — {type: always|probability|random, branch?, percent?}.
+  /// null = the default (first label alphabetically).
+  Map<String, dynamic>? condition;
+
   WorkflowNode({
     required this.id,
     required this.title,
@@ -88,6 +92,7 @@ class WorkflowNode {
     this.permissionRequirements = const [],
     this.state = NodeRuntimeState.idle,
     this.disabled = false,
+    this.condition,
   });
 
   static NodeCategory _categoryFromApi(String s) =>
@@ -108,6 +113,7 @@ class WorkflowNode {
         permissionRequirements: ((json['permissionRequirements'] as List?) ?? []).map((e) => e.toString()).toList(),
         state: _stateFromApi(json['state'] as String? ?? 'idle'),
         disabled: json['disabled'] as bool? ?? false,
+        condition: json['condition'] as Map<String, dynamic>?,
       );
 }
 

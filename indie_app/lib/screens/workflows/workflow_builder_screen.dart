@@ -200,6 +200,8 @@ class _WorkflowBuilderScreenState extends State<WorkflowBuilderScreen> {
     setState(() => _selectedNodeId = node.id);
     final titleCtl = TextEditingController(text: node.title);
     final subtitleCtl = TextEditingController(text: node.subtitle);
+    Map<String, dynamic>? condition = node.condition;
+    var conditionTouched = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,7 +227,21 @@ class _WorkflowBuilderScreenState extends State<WorkflowBuilderScreen> {
             TextField(controller: titleCtl, decoration: const InputDecoration(labelText: 'Node name')),
             const SizedBox(height: 12),
             TextField(controller: subtitleCtl, decoration: const InputDecoration(labelText: 'Description')),
-            if (node.permissionRequirements.isNotEmpty) ...[
+            if (node.category == NodeCategory.logic) ...[
+              const SizedBox(height: 16),
+              const Text('Branch condition', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              const SizedBox(height: 4),
+              const Text('How this node chooses between its labelled branches.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              const SizedBox(height: 8),
+              _ConditionEditor(
+                initial: node.condition,
+                onChanged: (c) {
+                  condition = c;
+                  conditionTouched = true;
+                },
+              ),
+            ],
+            if (node.permissionRequirements.isNotEmpty) [
               const SizedBox(height: 14),
               const Text('Permission requirements', style: TextStyle(color: AppColors.textFaint, fontSize: 12)),
               const SizedBox(height: 6),
@@ -266,7 +282,14 @@ class _WorkflowBuilderScreenState extends State<WorkflowBuilderScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  context.read<AppState>().updateNodeConfig(widget.workflowId, node.id, title: titleCtl.text, subtitle: subtitleCtl.text);
+                  context.read<AppState>().updateNodeConfig(
+                        widget.workflowId,
+                        node.id,
+                        title: titleCtl.text,
+                        subtitle: subtitleCtl.text,
+                        condition: conditionTouched ? condition : null,
+                        clearCondition: conditionTouched && condition == null,
+                      );
                   Navigator.of(ctx).pop();
                 },
                 child: const Text('Save'),
@@ -319,8 +342,8 @@ class _CanvasNode extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: selected ? AppColors.cyan : AppColors.stroke, width: selected ? 1.6 : 1),
-                boxShadow: node.disabled ? null : [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))],
+                border: Border.all(color: selected ? AppColors.accent : AppColors.stroke, width: selected ? 1.6 : 1),
+                boxShadow: node.disabled ? null : [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Opacity(
                 opacity: node.disabled ? 0.45 : 1,
@@ -361,9 +384,9 @@ class _CanvasNode extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.ink,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.cyan, width: 2),
+                  border: Border.all(color: AppColors.accent, width: 2),
                 ),
-                child: const Icon(Icons.add_rounded, size: 12, color: AppColors.cyan),
+                child: const Icon(Icons.add_rounded, size: 12, color: AppColors.accent),
               ),
             ),
           ),
@@ -385,7 +408,7 @@ class _Toolbar extends StatelessWidget {
         color: AppColors.surfaceRaised.withOpacity(0.96),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.stroke),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16)],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 16)],
       ),
       child: Row(
         children: [
@@ -407,5 +430,67 @@ class _Toolbar extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Picks how a logic node chooses its branch. Mirrors the server's chooseBranch():
+/// none = alphabetical default, always = one fixed branch, probability = that
+/// branch X% of the time, random = uniform among all labelled branches.
+class _ConditionEditor extends StatefulWidget {
+  final Map<String, dynamic>? initial;
+  final ValueChanged<Map<String, dynamic>?> onChanged;
+  const _ConditionEditor({required this.initial, required this.onChanged});
+
+  @override
+  State<_ConditionEditor> createState() => _ConditionEditorState();
+}
+
+class _ConditionEditorState extends State<_ConditionEditor> {
+  late String _type = (widget.initial?['type'] as String?) ?? 'none';
+  late final TextEditingController _branch = TextEditingController(text: (widget.initial?['branch'] as String?) ?? 'Yes');
+  late final TextEditingController _percent = TextEditingController(text: '${(widget.initial?['percent'] as num?)?.toInt() ?? 50}');
+
+  @override
+  void dispose() {
+    _branch.dispose();
+    _percent.dispose();
+    super.dispose();
+  }
+
+  void _emit() {
+    if (_type == 'none') {
+      widget.onChanged(null);
+    } else if (_type == 'random') {
+      widget.onChanged({'type': 'random'});
+    } else {
+      final pct = (int.tryParse(_percent.text.trim()) ?? 50).clamp(0, 100);
+      widget.onChanged({'type': _type, 'branch': _branch.text.trim(), if (_type == 'probability') 'percent': pct});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = {'none': 'Alphabetical (default)', 'always': 'Always', 'probability': 'Probability', 'random': 'Random'};
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Wrap(spacing: 8, runSpacing: 4, children: [
+        for (final e in labels.entries)
+          ChoiceChip(
+            label: Text(e.value),
+            selected: _type == e.key,
+            onSelected: (_) {
+              setState(() => _type = e.key);
+              _emit();
+            },
+          ),
+      ]),
+      if (_type == 'always' || _type == 'probability') ...[
+        const SizedBox(height: 10),
+        TextField(controller: _branch, onChanged: (_) => _emit(), decoration: const InputDecoration(labelText: 'Branch label (e.g. Yes)')),
+      ],
+      if (_type == 'probability') ...[
+        const SizedBox(height: 10),
+        TextField(controller: _percent, keyboardType: TextInputType.number, onChanged: (_) => _emit(), decoration: const InputDecoration(labelText: 'Chance of that branch (0–100 %)')),
+      ],
+    ]);
   }
 }

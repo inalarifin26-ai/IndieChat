@@ -24,7 +24,7 @@ class IndieFullLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/images/indie_logo_full.png',
+      'assets/images/indie_logo_full_light.png',
       width: width,
       filterQuality: FilterQuality.high,
     );
