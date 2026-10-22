@@ -62,9 +62,9 @@ class NodeCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surfaceCard,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _stateColor.withOpacity(glow ? 0.7 : 0.5), width: glow ? 1.4 : 1),
+              border: Border.all(color: _stateColor.withAlpha(glow ? 179 : 128), width: glow ? 1.4 : 1),
               boxShadow: glow
-                  ? [BoxShadow(color: _stateColor.withOpacity(0.25), blurRadius: 16, spreadRadius: 1)]
+                  ? [BoxShadow(color: _stateColor.withAlpha(64), blurRadius: 16, spreadRadius: 1)]
                   : null,
             ),
             child: Row(
@@ -73,7 +73,7 @@ class NodeCard extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: node.category.color.withOpacity(0.15),
+                    color: node.category.color.withAlpha(38),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: Icon(node.category.icon, color: node.category.color, size: 19),

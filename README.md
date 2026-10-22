@@ -57,3 +57,12 @@ you'd prefer different terms.
 ## Interactive preview
 
 `indie_preview.html` is a single-file, clickable preview of the redesigned UI (open it in any browser). Its sources are in `preview/` (`python3 preview/build.py` rebuilds it); `preview/test_preview.js` and `preview/test_voice.js` are headless-browser tests that drive the real flows (the voice one uses a fake speech recogniser).
+
+## Continuous checks (optional, no local Flutter needed)
+
+`docs/ci/ci.yml` is a GitHub Actions workflow that runs, on every push: the backend tests
+(Node 22), `flutter analyze` (full report kept as a downloadable artifact) and `flutter test`,
+and verifies `indie_preview.html` is in sync with `preview/`. Turn it on by copying it to
+`.github/workflows/ci.yml` — in the GitHub web UI (*Add file → Create new file*), or by git with a
+token that has the **`workflow`** scope (a plain `repo` token is rejected for workflow files,
+which is why it is not placed there by default).

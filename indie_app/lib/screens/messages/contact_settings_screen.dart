@@ -158,7 +158,7 @@ class _ContactSettingsScreenState extends State<ContactSettingsScreen> {
             title: 'Notifications',
             subtitle: g ? 'Message, mention, and call' : 'Mute message and call alerts',
             onTap: () => context.read<AppState>().updateContact(c.id, muted: !c.muted),
-            trailing: Switch(value: !c.muted, activeColor: AppColors.accent, onChanged: (_) => context.read<AppState>().updateContact(c.id, muted: !c.muted)),
+            trailing: Switch(value: !c.muted, onChanged: (_) => context.read<AppState>().updateContact(c.id, muted: !c.muted)),
           ),
           if (!g)
             SettingsRow(
@@ -166,7 +166,7 @@ class _ContactSettingsScreenState extends State<ContactSettingsScreen> {
               title: 'Pin chat',
               subtitle: 'Keep at the top of Messages',
               onTap: () => context.read<AppState>().updateContact(c.id, pinned: !c.pinned),
-              trailing: Switch(value: c.pinned, activeColor: AppColors.accent, onChanged: (_) => context.read<AppState>().updateContact(c.id, pinned: !c.pinned)),
+              trailing: Switch(value: c.pinned, onChanged: (_) => context.read<AppState>().updateContact(c.id, pinned: !c.pinned)),
             ),
           SettingsRow(
             icon: Icons.perm_media_outlined,

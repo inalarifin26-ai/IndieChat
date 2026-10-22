@@ -310,7 +310,7 @@ class _ApprovalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.approval.withOpacity(0.45)),
+        border: Border.all(color: AppColors.approval.withAlpha(115)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

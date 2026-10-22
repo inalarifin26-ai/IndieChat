@@ -27,7 +27,7 @@ class OutputViewerScreen extends StatelessWidget {
           if (o.shared)
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppColors.accent.withAlpha(26), borderRadius: BorderRadius.circular(12)),
               child: const Row(
                 children: [
                   Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 18),

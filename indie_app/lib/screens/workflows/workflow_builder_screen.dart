@@ -176,7 +176,7 @@ class _WorkflowBuilderScreenState extends State<WorkflowBuilderScreen> {
                     leading: Container(
                       width: 34,
                       height: 34,
-                      decoration: BoxDecoration(color: cat.color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: cat.color.withAlpha(38), borderRadius: BorderRadius.circular(10)),
                       child: Icon(cat.icon, color: cat.color, size: 18),
                     ),
                     title: Text(cat.label),
@@ -216,7 +216,7 @@ class _WorkflowBuilderScreenState extends State<WorkflowBuilderScreen> {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: BoxDecoration(color: node.category.color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: node.category.color.withAlpha(38), borderRadius: BorderRadius.circular(10)),
                   child: Icon(node.category.icon, color: node.category.color, size: 18),
                 ),
                 const SizedBox(width: 10),
@@ -343,7 +343,7 @@ class _CanvasNode extends StatelessWidget {
                 color: AppColors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: selected ? AppColors.accent : AppColors.stroke, width: selected ? 1.6 : 1),
-                boxShadow: node.disabled ? null : [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 10, offset: const Offset(0, 4))],
+                boxShadow: node.disabled ? null : [BoxShadow(color: Colors.black.withAlpha(18), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: Opacity(
                 opacity: node.disabled ? 0.45 : 1,
@@ -352,7 +352,7 @@ class _CanvasNode extends StatelessWidget {
                     Container(
                       width: 34,
                       height: 34,
-                      decoration: BoxDecoration(color: node.category.color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: node.category.color.withAlpha(38), borderRadius: BorderRadius.circular(10)),
                       child: Icon(node.category.icon, color: node.category.color, size: 17),
                     ),
                     const SizedBox(width: 10),
@@ -405,10 +405,10 @@ class _Toolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceRaised.withOpacity(0.96),
+        color: AppColors.surfaceRaised.withAlpha(245),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.stroke),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.10), blurRadius: 16)],
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(26), blurRadius: 16)],
       ),
       child: Row(
         children: [

@@ -100,7 +100,7 @@ class _OrchestratorScreenState extends State<OrchestratorScreen> {
           const SizedBox(height: 34),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.stroke), boxShadow: [BoxShadow(color: AppColors.indigo.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 4))]),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppColors.stroke), boxShadow: [BoxShadow(color: AppColors.indigo.withAlpha(20), blurRadius: 14, offset: const Offset(0, 4))]),
             child: const Text('What would you like to do today?', style: TextStyle(fontSize: 15)),
           ),
           const SizedBox(height: 22),
@@ -180,7 +180,7 @@ class _Orb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget ring(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF82A0FF).withOpacity(opacity)));
+    Widget ring(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF82A0FF).withAlpha((opacity * 255).round())));
     return SizedBox(
       width: 220,
       height: 220,
@@ -193,7 +193,7 @@ class _Orb extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const RadialGradient(center: Alignment(-0.2, -0.3), colors: [Color(0xFFBFD6FF), Color(0xFF8FB0FF), Color(0xFFC6B6FF), Color(0xFFE9E5FF)], stops: [0.0, 0.4, 0.75, 1.0]),
-            boxShadow: [BoxShadow(color: const Color(0xFF5A6EF0).withOpacity(0.35), blurRadius: 40, offset: const Offset(0, 18))],
+            boxShadow: [BoxShadow(color: const Color(0xFF5A6EF0).withAlpha(89), blurRadius: 40, offset: const Offset(0, 18))],
           ),
           alignment: Alignment.center,
           child: Container(

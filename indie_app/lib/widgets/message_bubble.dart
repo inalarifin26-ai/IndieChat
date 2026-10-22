@@ -114,7 +114,7 @@ class MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: mine ? Colors.black.withOpacity(0.16) : AppColors.surfaceRaised,
+          color: mine ? Colors.black.withAlpha(41) : AppColors.surfaceRaised,
           borderRadius: BorderRadius.circular(8),
           border: Border(left: BorderSide(color: mine ? Colors.white : AppColors.accent, width: 3)),
         ),
@@ -151,7 +151,7 @@ class MessageBubble extends StatelessWidget {
               Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(color: AppColors.danger.withOpacity(0.18), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: AppColors.danger.withAlpha(46), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.description_rounded, color: AppColors.danger, size: 18),
               ),
               const SizedBox(width: 10),

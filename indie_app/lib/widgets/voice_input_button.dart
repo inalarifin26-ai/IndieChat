@@ -44,7 +44,7 @@ Future<bool?> showVoiceSettingsSheet(BuildContext context, {required bool firstT
                     Text('End a command with “kirim” or “send” to send it without tapping. Off by default.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ]),
                 ),
-                Switch(value: hands, activeColor: AppColors.accent, onChanged: (v) => setSheet(() => hands = v)),
+                Switch(value: hands, onChanged: (v) => setSheet(() => hands = v)),
               ]),
             ),
             const SizedBox(height: 8),
@@ -184,7 +184,7 @@ class _VoiceMicButtonState extends State<VoiceMicButton> with SingleTickerProvid
               Container(
                 width: 40 + 22 * _pulse.value,
                 height: 40 + 22 * _pulse.value,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.danger.withOpacity(0.28 * (1 - _pulse.value))),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.danger.withAlpha((255 * 0.28 * (1 - _pulse.value)).round())),
               ),
             Container(
               width: 40,

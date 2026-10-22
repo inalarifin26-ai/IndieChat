@@ -13,7 +13,7 @@ class StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: color.withAlpha(31), borderRadius: BorderRadius.circular(20)),
       child: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700)),
     );
   }
@@ -91,7 +91,7 @@ class GradientButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: AppColors.brandGradient,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.28), blurRadius: 16, offset: const Offset(0, 6))],
+          boxShadow: [BoxShadow(color: AppColors.accent.withAlpha(71), blurRadius: 16, offset: const Offset(0, 6))],
         ),
         child: Material(
           color: Colors.transparent,
@@ -132,7 +132,7 @@ class GradientFab extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: AppColors.brandGradient,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8))],
+          boxShadow: [BoxShadow(color: AppColors.accent.withAlpha(102), blurRadius: 20, offset: const Offset(0, 8))],
         ),
         child: Icon(icon, color: Colors.white, size: 28),
       ),
@@ -196,7 +196,7 @@ class SegmentedTabs extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: i == selected ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(11),
-                  boxShadow: i == selected ? [BoxShadow(color: AppColors.indigo.withOpacity(0.12), blurRadius: 4, offset: const Offset(0, 1))] : null,
+                  boxShadow: i == selected ? [BoxShadow(color: AppColors.indigo.withAlpha(31), blurRadius: 4, offset: const Offset(0, 1))] : null,
                 ),
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   if (icons != null && icons![i] != null) ...[Icon(icons![i], size: 16, color: i == selected ? AppColors.indigo : AppColors.textSecondary), const SizedBox(width: 6)],

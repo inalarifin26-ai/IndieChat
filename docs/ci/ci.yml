@@ -1,0 +1,57 @@
+# Copy to .github/workflows/ci.yml to turn it on (see README → "Continuous checks").
+# It gives you `flutter analyze` / `flutter test` output on every push without needing Flutter locally.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: indie_backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22        # node:sqlite needs >= 22.5
+          cache: npm
+          cache-dependency-path: indie_backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: indie_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # 1) Show EVERYTHING (errors, warnings, infos) in the log and keep it as a downloadable file.
+      - name: flutter analyze (full report)
+        run: flutter analyze 2>&1 | tee analyze-report.txt
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-report
+          path: indie_app/analyze-report.txt
+      # 2) Gate the build on real problems only (errors + warnings); infos/lints don't fail it.
+      - name: flutter analyze (errors and warnings must be zero)
+        run: flutter analyze --no-fatal-infos
+      - run: flutter test
+
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: indie_preview.html must match its sources
+        run: |
+          python3 preview/build.py
+          git diff --exit-code indie_preview.html

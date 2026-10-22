@@ -50,7 +50,7 @@ class CanvasWirePainter extends CustomPainter {
       final b = _inAnchor(to.first);
       final done = from.first.state == NodeRuntimeState.success;
       final paint = Paint()
-        ..color = done ? AppColors.success.withOpacity(0.55) : AppColors.stroke
+        ..color = done ? AppColors.success.withAlpha(140) : AppColors.stroke
         ..strokeWidth = 2.2
         ..style = PaintingStyle.stroke;
       _curve(canvas, a, b, paint);
@@ -58,7 +58,7 @@ class CanvasWirePainter extends CustomPainter {
 
     if (dragFrom != null && dragTo != null) {
       final paint = Paint()
-        ..color = AppColors.accent.withOpacity(0.8)
+        ..color = AppColors.accent.withAlpha(204)
         ..strokeWidth = 2.4
         ..style = PaintingStyle.stroke;
       _curve(canvas, dragFrom!, dragTo!, paint);

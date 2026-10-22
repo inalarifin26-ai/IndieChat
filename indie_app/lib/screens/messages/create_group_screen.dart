@@ -100,7 +100,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 Text('Others can join this group via invite link', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               ]),
             ),
-            Switch(value: _allowNew, activeColor: AppColors.accent, onChanged: (v) => setState(() => _allowNew = v)),
+            Switch(value: _allowNew, onChanged: (v) => setState(() => _allowNew = v)),
           ]),
         ),
         const SizedBox(height: 12),

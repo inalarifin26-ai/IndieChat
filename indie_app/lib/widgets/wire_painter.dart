@@ -47,7 +47,7 @@ class WirePainter extends CustomPainter {
 
       final basePaint = Paint()
         ..color = isDone
-            ? AppColors.success.withOpacity(0.55)
+            ? AppColors.success.withAlpha(140)
             : AppColors.stroke
         ..strokeWidth = isDone ? 2.4 : 2
         ..style = PaintingStyle.stroke;
@@ -57,9 +57,9 @@ class WirePainter extends CustomPainter {
       if (isActive && pulseValue != null) {
         final t = pulseValue!;
         final pos = Offset.lerp(start, end, t)!;
-        final glow = Paint()..color = AppColors.accent.withOpacity(0.9);
+        final glow = Paint()..color = AppColors.accent.withAlpha(230);
         canvas.drawCircle(pos, 4.2, glow);
-        final glowOuter = Paint()..color = AppColors.accent.withOpacity(0.25);
+        final glowOuter = Paint()..color = AppColors.accent.withAlpha(64);
         canvas.drawCircle(pos, 9, glowOuter);
       }
 

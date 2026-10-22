@@ -258,7 +258,7 @@ class _StepRow extends StatelessWidget {
         sub = started == null ? 'In progress' : 'In progress · $started';
         subColor = AppColors.accent;
         titleColor = AppColors.textPrimary;
-        glow = [BoxShadow(color: AppColors.accent.withOpacity(0.18), spreadRadius: 4)];
+        glow = [BoxShadow(color: AppColors.accent.withAlpha(46), spreadRadius: 4)];
         break;
       case NodeRuntimeState.waiting:
         fill = AppColors.approval;
@@ -267,7 +267,7 @@ class _StepRow extends StatelessWidget {
         sub = 'Waiting for your approval';
         subColor = AppColors.approval;
         titleColor = AppColors.textPrimary;
-        glow = [BoxShadow(color: AppColors.approval.withOpacity(0.18), spreadRadius: 4)];
+        glow = [BoxShadow(color: AppColors.approval.withAlpha(46), spreadRadius: 4)];
         break;
       case NodeRuntimeState.error:
         fill = AppColors.danger;
@@ -293,7 +293,7 @@ class _StepRow extends StatelessWidget {
             width: 30,
             child: Column(children: [
               Container(width: 30, height: 30, alignment: Alignment.center, decoration: BoxDecoration(color: fill, shape: BoxShape.circle, border: Border.all(color: border, width: 2), boxShadow: glow), child: glyph),
-              if (!isLast) Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 2), color: node.state == NodeRuntimeState.success ? AppColors.success.withOpacity(0.45) : const Color(0xFFDDE2F0))),
+              if (!isLast) Expanded(child: Container(width: 2, margin: const EdgeInsets.symmetric(vertical: 2), color: node.state == NodeRuntimeState.success ? AppColors.success.withAlpha(115) : const Color(0xFFDDE2F0))),
             ]),
           ),
           const SizedBox(width: 14),
@@ -337,7 +337,7 @@ class _SparklinePainter extends CustomPainter {
       ..lineTo(size.width * (n - 1) / (_pts.length - 1), size.height)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(area, Paint()..color = AppColors.accent.withOpacity(0.10));
+    canvas.drawPath(area, Paint()..color = AppColors.accent.withAlpha(26));
     canvas.drawPath(path, Paint()..color = AppColors.accent..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round);
   }
 

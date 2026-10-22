@@ -73,7 +73,7 @@ class ChatComposer extends StatelessWidget {
                 child: Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(gradient: AppColors.brandGradient, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.accent.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(gradient: AppColors.brandGradient, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.accent.withAlpha(76), blurRadius: 12, offset: const Offset(0, 4))]),
                   child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 20),
                 ),
               );

@@ -96,7 +96,7 @@ class AgentDashboardScreen extends StatelessWidget {
                 ...agent.workflow.asMap().entries.map((e) => Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
-                        leading: CircleAvatar(radius: 12, backgroundColor: AppColors.accent.withOpacity(0.15), child: Text('${e.key + 1}', style: const TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w700))),
+                        leading: CircleAvatar(radius: 12, backgroundColor: AppColors.accent.withAlpha(38), child: Text('${e.key + 1}', style: const TextStyle(fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w700))),
                         title: Text(e.value, style: const TextStyle(fontSize: 13.5)),
                       ),
                     )),
