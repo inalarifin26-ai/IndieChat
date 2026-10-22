@@ -7,7 +7,7 @@ import '../../core/format.dart';
 import '../../models/agent_models.dart';
 import '../../models/orchestrator_models.dart';
 import '../../state/app_state.dart';
-import '../../widgets/common.dart';
+import '../../widgets/chat_composer.dart';
 import '../../widgets/indie_logo.dart';
 import '../../widgets/message_bubble.dart';
 import 'agent_chat_screen.dart';
@@ -167,7 +167,7 @@ class _OrchestratorScreenState extends State<OrchestratorScreen> {
                         },
                       ),
           ),
-          ChatComposer(controller: _controller, hint: 'Type your request...', onSend: () => _send(), onPlus: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attachments are coming soon')))),
+          ChatComposer(voice: true, controller: _controller, hint: 'Type your request...', onSend: () => _send(), onPlus: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Attachments are coming soon')))),
         ],
       ),
     );

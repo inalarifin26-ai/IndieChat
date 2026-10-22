@@ -90,6 +90,7 @@ class _CreateIdScreenState extends State<CreateIdScreen> {
       return;
     }
     if (!await _checkId() || pinBad) return;
+    if (!mounted) return;
     setState(() => _busy = true);
     try {
       final phrase = await context.read<AppState>().register(_pin.text.trim(), seedDemo: true, chosenId: _id.text.trim());

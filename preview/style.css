@@ -235,3 +235,13 @@ svg{display:block;flex:0 0 auto;}
 #shareSheet .cardlist .row{padding:8px 14px;}
 #shareSheet .lbl{margin:10px 0 6px;}
 #shareSheet{max-height:94%;}
+
+.composer .snd{display:none;}
+.composer.has .snd{display:flex;}
+.composer .mic{width:40px;height:40px;border-radius:50%;border:none;background:var(--soft);color:var(--indigo);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;position:relative;}
+.composer.has .mic:not(.rec){display:none;}
+.composer.listening .snd{display:none;}
+.composer .mic.rec{background:var(--red);color:#fff;box-shadow:0 0 0 0 rgba(229,72,77,.5);animation:micpulse 1.1s infinite;}
+@keyframes micpulse{70%{box-shadow:0 0 0 12px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+.composer .fld input.live{color:var(--blue);}
+.lang{display:flex;gap:8px;margin:6px 0 4px;}

@@ -56,4 +56,4 @@ you'd prefer different terms.
 
 ## Interactive preview
 
-`indie_preview.html` is a single-file, clickable preview of the redesigned UI (open it in any browser). Its sources are in `preview/` (`python3 preview/build.py` rebuilds it); `preview/test_preview.js` is a headless-browser test that drives the real flows.
+`indie_preview.html` is a single-file, clickable preview of the redesigned UI (open it in any browser). Its sources are in `preview/` (`python3 preview/build.py` rebuilds it); `preview/test_preview.js` and `preview/test_voice.js` are headless-browser tests that drive the real flows (the voice one uses a fake speech recogniser).

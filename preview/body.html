@@ -109,9 +109,9 @@
   </div>
   <div class="chat" id="chBody"></div>
   <div class="replybar" id="chReply"></div>
-  <div class="composer"><button class="plus" onclick="openAttach('chat')"><i data-i="plus" data-s="20"></i></button>
-    <div class="fld"><input id="chInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"><i data-i="smile" data-s="20"></i></div>
-    <button class="snd" onclick="sendChat()"><i data-i="send" data-s="19"></i></button></div>
+  <div class="composer" id="chComposer"><button class="plus" onclick="openAttach('chat')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="chInput" placeholder="Type a message..." oninput="voiceSync('chat')" onkeydown="if(event.key==='Enter')sendChat()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" id="chSnd" onclick="sendChat()"><i data-i="send" data-s="19"></i></button><button class="mic" id="chMic" title="Voice input (hold for settings)" onclick="voiceToggle('chat')" onpointerdown="vDown('chat')" onpointerup="vUp()" onpointerleave="vUp()"><i data-i="mic" data-s="20"></i></button></div>
 </section>
 <section class="page" id="pg-agentchat">
   <div class="head sub" style="padding-bottom:8px;border-bottom:1px solid var(--stroke);background:#fff">
@@ -122,9 +122,9 @@
   </div>
   <div class="chat" id="agBody"></div>
   <div class="replybar" id="agReply"></div>
-  <div class="composer"><button class="plus" onclick="openAttach('agent')"><i data-i="plus" data-s="20"></i></button>
-    <div class="fld"><input id="agInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendAgent()"><i data-i="smile" data-s="20"></i></div>
-    <button class="snd" onclick="sendAgent()"><i data-i="send" data-s="19"></i></button></div>
+  <div class="composer" id="agComposer"><button class="plus" onclick="openAttach('agent')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="agInput" placeholder="Type a message..." oninput="voiceSync('agent')" onkeydown="if(event.key==='Enter')sendAgent()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" id="agSnd" onclick="sendAgent()"><i data-i="send" data-s="19"></i></button><button class="mic" id="agMic" title="Voice input (hold for settings)" onclick="voiceToggle('agent')" onpointerdown="vDown('agent')" onpointerup="vUp()" onpointerleave="vUp()"><i data-i="mic" data-s="20"></i></button></div>
 </section>
 <section class="page" id="pg-settings">
   <div class="head sub"><button class="ibtn" onclick="back()"><i data-i="back" data-s="22"></i></button><h1>Chat Settings</h1></div>
@@ -162,9 +162,9 @@
     <div class="grid2" id="orbChips"></div>
   </div>
   <div class="chat" id="orBody" style="display:none"></div>
-  <div class="composer"><button class="plus" onclick="toast('Attachments are coming soon')"><i data-i="plus" data-s="20"></i></button>
-    <div class="fld"><input id="orInput" placeholder="Type your request..." onkeydown="if(event.key==='Enter')sendOrch()"><i data-i="smile" data-s="20"></i></div>
-    <button class="snd" onclick="sendOrch()"><i data-i="send" data-s="19"></i></button></div>
+  <div class="composer" id="orComposer"><button class="plus" onclick="toast('Attachments are coming soon')"><i data-i="plus" data-s="20"></i></button>
+    <div class="fld"><input id="orInput" placeholder="Type your request..." oninput="voiceSync('orch')" onkeydown="if(event.key==='Enter')sendOrch()"><i data-i="smile" data-s="20"></i></div>
+    <button class="snd" id="orSnd" onclick="sendOrch()"><i data-i="send" data-s="19"></i></button><button class="mic" id="orMic" title="Voice input (hold for settings)" onclick="voiceToggle('orch')" onpointerdown="vDown('orch')" onpointerup="vUp()" onpointerleave="vUp()"><i data-i="mic" data-s="20"></i></button></div>
 </section>
 <section class="page" id="pg-flowrun">
   <div class="head sub"><button class="ibtn" onclick="leaveFlow()"><i data-i="back" data-s="22"></i></button>
@@ -207,6 +207,7 @@
 <div class="sheet" id="membersSheet"></div>
 <div class="sheet" id="noteSheet"></div>
 <div class="sheet" id="condSheet"></div>
+<div class="sheet" id="voiceSheet"></div>
 <div class="sheet" id="apprSheet">
   <div class="handle"></div>
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div id="apprAv"></div><div><h3 style="font-size:16px">Marketing Agent</h3><div class="hint" style="margin:0">Requesting permission</div></div></div>

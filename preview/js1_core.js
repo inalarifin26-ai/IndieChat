@@ -13,6 +13,7 @@ const ICONS = {
   back: '<path d="M15 5l-7 7 7 7"/>',
   send: '<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>',
   plane: '<path d="M4 12l16-8-6 16-3-7z"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.5 4.5 0 0 0 7 0M9 9.6h.01M15 9.6h.01"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   checks: '<path d="M2.5 12.5l4.5 4.5L15 8.5M10 16l1 1L21 7"/>',

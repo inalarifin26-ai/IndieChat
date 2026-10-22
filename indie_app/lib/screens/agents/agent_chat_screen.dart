@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/chat_models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
+import '../../widgets/chat_composer.dart';
 import '../../widgets/consent_sheet.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/message_action_sheet.dart';
@@ -217,6 +218,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
           ),
           const SizedBox(height: 8),
           ChatComposer(
+          voice: true,
             controller: _controller,
             onPlus: () => showAttachSheet(
               context,

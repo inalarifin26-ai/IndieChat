@@ -6,6 +6,7 @@ import '../../core/format.dart';
 import '../../models/chat_models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/common.dart';
+import '../../widgets/chat_composer.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/message_action_sheet.dart';
 import 'contact_settings_screen.dart';
@@ -181,6 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         if (_replyTo != null) _ReplyBar(message: _replyTo!, onCancel: () => setState(() => _replyTo = null)),
         ChatComposer(
+          voice: true,
           controller: _controller,
           onPlus: () => showAttachSheet(
             context,

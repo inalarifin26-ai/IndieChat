@@ -164,6 +164,36 @@ Things worth knowing:
   call signatures were cross-checked by script, but run `flutter analyze` once
   after `flutter pub get` and report anything it finds.
 
+## Voice input in chats
+
+Every chat surface (person/group chats, agent chats, the Orchestrator room) has a
+**microphone** where Send would be while the box is empty. Tap to dictate, tap again to
+stop; **long-press** for voice settings (language: Bahasa Indonesia / English, hands-free send).
+
+- **Consent first.** The first tap shows what voice input does (the device's speech
+  recognition makes the text — on some devices/languages that is an online service;
+  Indie never receives or stores audio) and listens only after *Allow microphone*.
+- **Nothing is sent for you** unless you turn on **Hands-free send** (off by default):
+  then ending a command with “kirim” / “send” sends it. The keyword must be the last
+  word, at least two words must remain, and “resend”/“kirimkan” don't count
+  (`lib/core/voice_command.dart`, covered by `test/voice_command_test.dart`).
+- Saying **“batal” / “cancel”** discards what you just dictated.
+- Dictation is appended to text you already typed.
+
+Setup after `flutter create .` (microphone + network permissions, idempotent):
+
+```bash
+python3 tool/add_platform_permissions.py                    # Android + iOS permissions
+python3 tool/add_platform_permissions.py --allow-cleartext  # + http:// to your dev server (Android, DEV ONLY)
+flutter pub get
+flutter test                                                # includes the voice-command parser tests
+```
+
+Code: `lib/core/voice_service.dart` (wraps `speech_to_text`; only APIs shared by 6.x and
+7.x are used), `lib/widgets/voice_input_button.dart` (mic + consent/settings sheet),
+`lib/widgets/chat_composer.dart` (`ChatComposer(voice: true)`). The web preview has the
+same feature on the Web Speech API (Chrome/Edge) with the same parser.
+
 ## What's real vs. simulated
 
 | Area | This build |
