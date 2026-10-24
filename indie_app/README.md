@@ -118,6 +118,12 @@ there's no session yet — see below.
    `GOOGLE_CLIENT_ID`/`SECRET` yet, the connector shows as "Unavailable"
    instead of erroring.
 
+## One-click analyze
+
+Don't want to type commands? Double-click **`analyze.bat`** (Windows) or run **`./analyze.sh`**
+(Mac/Linux) inside `indie_app/`. It runs `flutter pub get` + `flutter analyze` and writes everything
+to `analyze.txt` — send me that file's contents and I'll fix what it reports.
+
 ## Light-theme redesign — screen map
 
 The UI follows the two reference sheets ("Personal Chat" and "INDIE Message").

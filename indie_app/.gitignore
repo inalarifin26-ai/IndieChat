@@ -17,3 +17,4 @@ pubspec.lock
 
 # macOS
 .DS_Store
+analyze.txt
