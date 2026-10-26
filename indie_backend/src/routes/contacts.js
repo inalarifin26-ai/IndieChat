@@ -62,6 +62,9 @@ router.post('/', (req, res) => {
   const errors = {};
   if (!name || !String(name).trim()) errors.name = 'Name is required';
   if (!info || !String(info).trim()) errors.info = 'Enter an Indie ID, phone number or email';
+  if (!errors.name && String(name).length > 80) errors.name = 'Name is too long (max 80 characters)';
+  if (!errors.info && String(info).length > 120) errors.info = 'Contact info is too long (max 120 characters)';
+  if (group && String(group).length > 40) errors.group = 'Group label is too long (max 40 characters)';
   if (Object.keys(errors).length) return res.status(400).json({ error: 'Validation failed', fields: errors });
   const id = crypto.randomUUID();
   db.prepare(
@@ -78,6 +81,8 @@ router.patch('/:id', (req, res) => {
   const { name, info, group, muted, pinned, description, visibility, allowNewMembers } = req.body || {};
   if (name !== undefined && !String(name).trim()) return res.status(400).json({ error: 'Name cannot be empty' });
   if (info !== undefined && !String(info).trim()) return res.status(400).json({ error: 'Contact info cannot be empty' });
+  const cap = (name !== undefined && String(name).length > 80 && 'Name is too long (max 80 characters)') || (info !== undefined && String(info).length > 120 && 'Contact info is too long (max 120 characters)') || (description !== undefined && String(description).length > 500 && 'Description is too long (max 500 characters)');
+  if (cap) return res.status(400).json({ error: cap });
   if (visibility !== undefined && !['public', 'private'].includes(visibility)) return res.status(400).json({ error: 'visibility must be public or private' });
   if (c.kind === 'group') {
     db.prepare('UPDATE contacts SET description = ?, visibility = ?, allow_new = ? WHERE id = ?').run(

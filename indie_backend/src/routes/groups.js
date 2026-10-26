@@ -40,6 +40,9 @@ function systemMessage(userId, groupId, text) {
 router.post('/', (req, res) => {
   const { name, description, visibility, allowNewMembers, memberIds } = req.body || {};
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'Validation failed', fields: { name: 'Group name is required' } });
+  if (String(name).length > 80) return res.status(400).json({ error: 'Group name is too long (max 80 characters)' });
+  if (description && String(description).length > 500) return res.status(400).json({ error: 'Description is too long (max 500 characters)' });
+  if (Array.isArray(memberIds) && memberIds.length > 200) return res.status(400).json({ error: 'Too many members (max 200)' });
   if (visibility !== undefined && !['public', 'private'].includes(visibility)) return res.status(400).json({ error: 'visibility must be public or private' });
   const members = validMemberIds(req.userId, memberIds === undefined ? [] : memberIds);
   if (!members) return res.status(400).json({ error: 'memberIds must be your own contacts (people only)' });

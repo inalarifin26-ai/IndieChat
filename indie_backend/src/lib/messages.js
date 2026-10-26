@@ -76,11 +76,13 @@ function buildAttachment(userId, body) {
   const kind = body.kind || 'text';
   if (kind === 'text') {
     if (!body.text || !String(body.text).trim()) return { error: 'text is required' };
+    if (String(body.text).length > 4000) return { error: 'text is too long (max 4000 characters)' };
     return { kind, text: String(body.text).trim(), payload: null };
   }
   if (kind === 'file') {
     const f = body.payload && body.payload.file;
     if (!f || !f.name) return { error: 'payload.file.name is required' };
+    if (String(f.name).length > 200) return { error: 'file name is too long (max 200 characters)' };
     return { kind, text: '', payload: { file: { name: String(f.name), size: String(f.size || '') } } };
   }
   if (kind === 'output') {

@@ -28,6 +28,7 @@ router.get('/messages', (req, res) => {
 router.post('/messages', (req, res) => {
   const text = String((req.body && req.body.text) || '').trim();
   if (!text) return res.status(400).json({ error: 'text is required' });
+  if (text.length > 1000) return res.status(400).json({ error: 'text is too long (max 1000 characters)' });
   orch.ensureWelcome(req.userId);
   if (orch.isBusy(req.userId)) {
     return res.status(409).json({ error: 'Orchestrator is still working on your previous instruction' });

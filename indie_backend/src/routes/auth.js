@@ -9,7 +9,16 @@ const { JWT_SECRET, requireAuth } = require('../middleware/auth');
 const { logAudit } = require('../lib/audit');
 const { seedDemoData } = require('../lib/seedDemoData');
 
+const { createLimiter, clientKey } = require('../middleware/rateLimit');
+const { tooLong } = require('../middleware/security');
+
 const router = express.Router();
+const num = (v, d) => (Number(v) > 0 ? Number(v) : d);
+// Failed logins / recoveries are throttled per client + account; correct ones do not count.
+const loginLimiter = createLimiter({ windowMs: 15 * 60_000, max: num(process.env.RL_LOGIN_MAX, 8), skipSuccessful: true, keyFn: (r) => clientKey(r, (r.body || {}).personalId), message: 'Too many failed log-in attempts. Please wait before trying again.' });
+const recoverLimiter = createLimiter({ windowMs: 15 * 60_000, max: num(process.env.RL_RECOVER_MAX, 5), skipSuccessful: true, keyFn: (r) => clientKey(r, (r.body || {}).personalId), message: 'Too many failed recovery attempts. Please wait before trying again.' });
+const registerLimiter = createLimiter({ windowMs: 60 * 60_000, max: num(process.env.RL_REGISTER_MAX, 30), keyFn: (r) => clientKey(r), message: 'Too many accounts created from this network. Please try again later.' });
+const lookupLimiter = createLimiter({ windowMs: 60_000, max: num(process.env.RL_LOOKUP_MAX, 60), keyFn: (r) => clientKey(r), message: 'Too many ID lookups. Please slow down.' });
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -33,11 +42,12 @@ function issueSession(userId) {
  * The recovery phrase is generated server-side, returned exactly ONCE, and
  * only its scrypt hash is ever persisted — see spec §13 & §15.
  */
-router.post('/register', (req, res) => {
+router.post('/register', registerLimiter, (req, res) => {
   const { credential, seedDemo } = req.body || {};
   if (!credential || String(credential).length < 6) {
     return res.status(400).json({ error: 'credential must be at least 6 characters' });
   }
+  if (String(credential).length > 200) return res.status(400).json({ error: 'credential is too long (max 200 characters)' });
 
   // The person may choose their own Indie ID ("Create Your ID" screen);
   // without one we generate a word.word99 ID as before.
@@ -91,8 +101,9 @@ router.post('/register', (req, res) => {
 /**
  * POST /auth/login  { personalId, credential }
  */
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { personalId, credential } = req.body || {};
+  if (tooLong(personalId, 64, 'personalId') || tooLong(credential, 200, 'credential')) return res.status(400).json({ error: 'Invalid Personal ID or credential' });
   const user = db.prepare('SELECT * FROM users WHERE personal_id = ?').get(personalId);
   if (!user || !verifySecret(credential || '', user.credential_hash, user.credential_salt)) {
     return res.status(401).json({ error: 'Invalid Personal ID or credential' });
@@ -108,8 +119,10 @@ router.post('/login', (req, res) => {
  * phrase lets the user set a new local credential without ever exposing or
  * re-deriving the stored one.
  */
-router.post('/recover', (req, res) => {
+router.post('/recover', recoverLimiter, (req, res) => {
   const { personalId, recoveryPhrase, newCredential } = req.body || {};
+  const longField = tooLong(personalId, 64, 'personalId') || tooLong(recoveryPhrase, 300, 'recoveryPhrase') || tooLong(newCredential, 200, 'newCredential');
+  if (longField) return res.status(400).json({ error: longField });
   if (!newCredential || String(newCredential).length < 6) {
     return res.status(400).json({ error: 'newCredential must be at least 6 characters' });
   }
@@ -156,14 +169,14 @@ router.patch('/me', requireAuth, (req, res) => {
 });
 
 // Public (pre-account) helpers for the "Create Your ID" screen.
-router.get('/id-available', (req, res) => {
+router.get('/id-available', lookupLimiter, (req, res) => {
   const v = validateChosenId(req.query.id);
   if (!v.ok) return res.json({ id: v.id, valid: false, available: false, reason: v.reason });
   const taken = !!db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(v.id);
   res.json({ id: v.id, valid: true, available: !taken, reason: taken ? 'This ID is already taken' : null });
 });
 
-router.get('/id-suggestions', (req, res) => {
+router.get('/id-suggestions', lookupLimiter, (req, res) => {
   res.json({ suggestions: suggestIds(3, (id) => !!db.prepare('SELECT 1 FROM users WHERE personal_id = ?').get(id)) });
 });
 
