@@ -362,6 +362,24 @@ Notes:
   `Weekly Report.pdf`) and never raw JSON internals; deleted messages are
   never returned.
 
+
+## Hardening
+
+- **Rate limits** (`middleware/rateLimit.js`, in-memory fixed window): failed log-ins and recoveries are
+  throttled per client + account (a correct log-in does not use up the allowance), registrations per
+  client per hour, Indie-ID lookups per minute (limits enumeration). `429` carries `Retry-After`.
+  Per-process only — behind several instances, back the Map with Redis. Switched off automatically
+  inside `node --test` runs; `RATE_LIMIT_FORCE=1` turns it on (the hardening tests do).
+- **Headers** on every response: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
+  `Cache-Control: no-store`; no `X-Powered-By`.
+- **Errors**: malformed JSON → `400`, bodies over 256 KB → `413` (was a generic `500`).
+- **Input caps**: message text 4000 chars, file names 200, contact/group names 80, contact info 120,
+  descriptions 500, Orchestrator instructions 1000, credentials 200, group members 200.
+- `src/app.js` builds the Express app, `src/index.js` only loads `.env` and listens — so tests can
+  mount the real app.
+- Tests: `test/hardening.test.js` (limits, headers, errors) and `test/caps.test.js`; both were checked
+  by deliberately breaking the code and confirming the tests fail.
+
 ## Simplifications called out on purpose (read before treating this as final)
 
 - ~~Recovery phrase generation is NOT full BIP-39~~ **Fixed:** now uses the
