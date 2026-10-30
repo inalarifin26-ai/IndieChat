@@ -74,8 +74,9 @@ function agentReply(a, text) {
   return { t: "That is outside my workflow, so I can't do it. I can only: " + a.workflow.join('; ') + '. To change what I do, ask the Orchestrator.', cta: true };
 }
 function connectorReply(hit) {
-  const cal = /calendar/i.test(hit), cx = CONNECTORS.find(c => c.id === (cal ? 'google_calendar' : 'gmail'));
-  if (!cx.on) return { t: `I can't reach your ${cal ? 'calendar' : 'inbox'} right now (${cx.name} is not connected for this account). Connect it under More → Connectors, then ask me again.` };
+  const inv = /invoice/i.test(hit), cal = /calendar/i.test(hit), cx = CONNECTORS.find(c => c.id === (inv ? 'google_drive' : cal ? 'google_calendar' : 'gmail'));
+  if (!cx.on) return { t: `I can't reach your ${inv ? 'Google Drive' : cal ? 'calendar' : 'inbox'} right now (${cx.name} is not connected for this account). Connect it under More → Connectors, then ask me again.` };
+  if (inv) return { card: { title: 'Invoice files in your Drive', insights: ['Invoice 2026-001.pdf — modified 05/01/2026', 'invoice-acme.xlsx — modified 02/01/2026'] } };
   return { card: cal ? { title: 'Upcoming calendar events', insights: ['Design review — 10:00', 'Dentist — tomorrow', 'Team sync — Fri 09:00'] } : { title: 'Unread emails', insights: ['Quarterly numbers — Finance', 'Re: Meeting — Alex Johnson'] } };
 }
 function sendAgent(extra) {
@@ -85,7 +86,7 @@ function sendAgent(extra) {
   setTimeout(() => { typingIn = id; if (curAgent && curAgent.id === id) renderAgentChat(); }, 300);
   setTimeout(() => {
     typingIn = null; const ag = agentById(id), r = agentReply(ag, text);
-    if (r.hit && /calendar|email/i.test(r.hit)) { const cr = connectorReply(r.hit); ag.messages.push(cr.card ? mk(false, '', { type: 'card', card: cr.card }) : mk(false, cr.t)); }
+    if (r.hit && /calendar|email|invoice/i.test(r.hit)) { const cr = connectorReply(r.hit); ag.messages.push(cr.card ? mk(false, '', { type: 'card', card: cr.card }) : mk(false, cr.t)); }
     else {
       ag.messages.push(mk(false, r.t, { cta: r.cta }));
       if (r.hit) setTimeout(() => { ag.messages.push(mk(false, '', { type: 'card', card: { title: 'Task update — ' + r.hit, metrics: [['Workflow step', 'Completed'], ['Saved to', 'Vault']], insights: ['Result stored in your Personal Vault', 'Nothing outside my workflow was touched'] } })); if (curAgent && curAgent.id === id) renderAgentChat(); refreshLists(); }, 1500);

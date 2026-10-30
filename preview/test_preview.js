@@ -66,6 +66,14 @@ const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL:', m); } 
   await ev("toggleConnector('google_calendar')"); await page.type('#agInput', 'check my calendar again'); await page.keyboard.press('Enter'); await wait(1500);
   ok(await ev("curAgent.messages.at(-1).type==='card'"), 'assistant returns events card when connected');
 
+  // --- Finance Agent ↔ Drive connector parity ---
+  await ev("go('msg');openAgentChat('a3')"); await page.type('#agInput', 'read my invoices'); await page.keyboard.press('Enter'); await wait(1500);
+  ok(await ev("curAgent.messages.at(-1).t.includes('Google Drive') && curAgent.messages.at(-1).t.includes('Connectors')"), 'finance agent points to Connectors when Drive is not connected');
+  await ev("toggleConnector('google_drive')"); await page.type('#agInput', 'read invoices again'); await page.keyboard.press('Enter'); await wait(1500);
+  ok(await ev("curAgent.messages.at(-1).type==='card' && curAgent.messages.at(-1).card.title==='Invoice files in your Drive'"), 'finance agent returns the invoice files card when Drive is connected');
+  await page.type('#agInput', 'calculate the weekly cash flow'); await page.keyboard.press('Enter'); await wait(1500);
+  ok(await ev("curAgent.messages.at(-1).t.includes('part of my workflow')"), 'other finance steps keep their normal behaviour');
+
   // --- flow: run → pause at approval → approve → complete; cancel path ---
   await ev("go('flow');openFlow('w1',true)"); await wait(6000); ok(await ev("FR.status==='waiting'"), 'flow pauses at approval node'); ok(await ev("$('#frBanner').style.display==='flex'"), 'approval banner visible');
   await ev("apprDecide(true)"); await wait(2600); ok(await ev("FR.status==='done'&&Object.values(FR.st).every(s=>s==='done')"), 'flow resumes and completes after approval');

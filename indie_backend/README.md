@@ -298,9 +298,14 @@ the OAuth dance.
 connectors: `drive.metadata.readonly` scope (file names/links/timestamps
 only, never contents — least privilege), one action (`listRecentFiles`),
 done. `GET /connectors/google_drive/files` lists recently modified files.
-Not wired into an agent workflow step yet (no seeded agent has a
-Drive-shaped task) — the same one-line change used for Calendar/Gmail would
-do it whenever that's useful.
+**Wired into the Finance Agent:** its `Read invoices` step lists files whose
+name contains "invoice" (`GET /connectors/google_drive/files?nameContains=`
+does the same on demand) — metadata only (names and dates, never contents).
+The search text is escaped before it goes into Drive's `q` string, so quotes
+and backslashes cannot break out of the query (covered by a test that was
+checked by deliberately removing the escaping). Not connected / empty / API
+error each get their own plain message; the agent's other steps and its scope
+boundary are unaffected. See `test/driveAgent.test.js`.
 
 
 ## Real condition evaluation for `logic` nodes

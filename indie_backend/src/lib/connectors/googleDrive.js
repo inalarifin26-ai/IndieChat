@@ -10,10 +10,21 @@ const base = makeGoogleConnector({
   scope: 'https://www.googleapis.com/auth/drive.metadata.readonly',
 });
 
-/** The one action specific to this connector: list recently modified files. */
-async function listRecentFiles(userId, { maxResults = 10 } = {}) {
+/** Escapes a value for use inside a single-quoted Drive `q` string. */
+function escapeQ(v) {
+  return String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/**
+ * The one action specific to this connector: list recently modified files
+ * (metadata only). `nameContains` narrows it to files whose name contains
+ * that text — e.g. "invoice" for the Finance Agent's "Read invoices" step.
+ */
+async function listRecentFiles(userId, { maxResults = 10, nameContains } = {}) {
   const token = await base.getValidAccessToken(userId);
+  const q = nameContains ? `name contains '${escapeQ(String(nameContains).slice(0, 80))}' and trashed = false` : 'trashed = false';
   const params = new URLSearchParams({
+    q,
     pageSize: String(maxResults),
     orderBy: 'modifiedTime desc',
     fields: 'files(id,name,mimeType,modifiedTime,webViewLink)',
@@ -37,4 +48,4 @@ async function listRecentFiles(userId, { maxResults = 10 } = {}) {
   }));
 }
 
-module.exports = { ...base, listRecentFiles };
+module.exports = { ...base, listRecentFiles, escapeQ };

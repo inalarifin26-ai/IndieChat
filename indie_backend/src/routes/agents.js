@@ -8,6 +8,7 @@ const { evaluate, resultCard } = require('../lib/agentScope');
 const aiModel = require('../lib/aiModel');
 const gcal = require('../lib/connectors/googleCalendar');
 const gmail = require('../lib/connectors/gmail');
+const gdrive = require('../lib/connectors/googleDrive');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -71,6 +72,25 @@ async function replyWithCalendar(userId, agent) {
         ? ' Connect it under More → Connectors, then ask me again.'
         : '';
     insertAgentMessage(userId, agent.id, 'agent', 'text', `I can't reach your calendar right now (${err.message}).${hint}`);
+  }
+}
+
+async function replyWithInvoiceFiles(userId, agent) {
+  try {
+    const files = await gdrive.listRecentFiles(userId, { maxResults: 8, nameContains: 'invoice' });
+    if (!files.length) {
+      insertAgentMessage(userId, agent.id, 'agent', 'text', 'Checked your Google Drive — no files with "invoice" in the name.');
+      return;
+    }
+    insertAgentMessage(userId, agent.id, 'agent', 'card', '', {
+      card: {
+        title: 'Invoice files in your Drive',
+        insights: files.map((f) => `${f.name} — modified ${new Date(f.modifiedAt).toLocaleDateString('en-GB')}`),
+      },
+    });
+  } catch (err) {
+    const hint = err.code === 'NOT_CONNECTED' || err.code === 'NEEDS_RECONNECT' ? ' Connect it under More → Connectors, then ask me again.' : '';
+    insertAgentMessage(userId, agent.id, 'agent', 'text', `I can't reach your Google Drive right now (${err.message}).${hint}`);
   }
 }
 
@@ -154,6 +174,10 @@ router.post('/:id/messages', (req, res) => {
       // seed data wired to an actual external action end to end.
       if (verdict.kind === 'in_scope' && /calendar/i.test(verdict.hit || '')) {
         await replyWithCalendar(req.userId, a);
+        return;
+      }
+      if (verdict.kind === 'in_scope' && /invoice/i.test(verdict.hit || '')) {
+        await replyWithInvoiceFiles(req.userId, a);
         return;
       }
       if (verdict.kind === 'in_scope' && /email/i.test(verdict.hit || '')) {

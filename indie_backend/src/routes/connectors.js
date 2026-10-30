@@ -96,7 +96,8 @@ router.get('/gmail/messages', requireAuth, async (req, res) => {
 
 router.get('/google_drive/files', requireAuth, async (req, res) => {
   try {
-    const files = await gdrive.listRecentFiles(req.userId, { maxResults: Number(req.query.maxResults) || 10 });
+    const nameContains = req.query.nameContains ? String(req.query.nameContains).slice(0, 80) : undefined;
+    const files = await gdrive.listRecentFiles(req.userId, { maxResults: Math.min(Number(req.query.maxResults) || 10, 50), nameContains });
     res.json(files);
   } catch (err) {
     res.status(errStatus(err)).json({ error: err.message, code: err.code });
